@@ -4,46 +4,61 @@
 #'
 #' @param swot_file string path to swot_file
 #' @param sos_file string path to sos_file
-#' @param reach_id integer unique reach identifier
-#'
 #' @return list matrix of reach data (both valid and invalid)
-get_input_data <- function(swot_file, sos_file, reach_id) {
+get_input_data <- function(swot_file, sos_file) {
 
   # Open files for reading and get data
-  swot_input <- RNetCDF::open.nc(swot_file)
-  sos_input <- RNetCDF::open.nc(sos_file)
+  swot_input <- ncdf4::nc_open(swot_file)
+  sos_input <- ncdf4::nc_open(sos_file)
 
-  # Track nt
-  nt <- RNetCDF::var.get.nc(swot_input, "nt")
+  # Track reachid and nt
+  reachid <- ncdf4::ncatt_get(sos_input, 0)$reach_id[[1]]
+  nt <- ncdf4::ncvar_get(swot_input, "nt")
 
-  # Data
-  reach_grp = RNetCDF::grp.inq.nc(swot_input, "reach")$self
-  width <- RNetCDF::var.get.nc(reach_grp, "width")
-  wse <- RNetCDF::var.get.nc(reach_grp, "wse")
-  slope2 <- RNetCDF::var.get.nc(reach_grp, "slope2")
+  # Check global attribute for reach validity and return empty list if invalid
+  valid <- ncdf4::ncatt_get(sos_input, 0)$valid[[1]]
+  if (valid == 0) { return(list(valid = FALSE, reachid = reachid, nt = nt)) }
+
+  # width
+  width <- ncdf4::ncvar_get(swot_input, "reach/width")
+  width_fill <- ncdf4::ncatt_get(swot_input, "reach/width", "_FillValue")
+  width[width == width_fill$value] <- NA
+  width = t(width)
+
+  # wse
+  wse <- ncdf4::ncvar_get(swot_input, "reach/wse")
+  wse_fill <- ncdf4::ncatt_get(swot_input, "reach/wse", "_FillValue")
+  wse[wse == wse_fill$value] <- NA
+  wse = t(wse)
+
+  # slope2
+  slope2 <- ncdf4::ncvar_get(swot_input, "reach/slope2")
+  slope_fill <- ncdf4::ncatt_get(swot_input, "reach/slope2", "_FillValue")
+  slope2[slope2 == slope_fill$value] <- NA
+  slope2 = t(slope2)
 
   # Bankfull depth
-  reach_grp = RNetCDF::grp.inq.nc(sos_input, "reaches")$self
-  reach_ids <- RNetCDF::var.get.nc(reach_grp, "reach_id")
-  index <- which(reach_ids==reach_id, arr.ind=TRUE)
-  db <- RNetCDF::var.get.nc(reach_grp, "logDb_hat")[index]
-  db <- exp(db)
-
-  # Close files
-  RNetCDF::close.nc(swot_input)
-  RNetCDF::close.nc(sos_input)
+  logDb <- ncdf4::ncvar_get(sos_input, "reach/logDb_hat")
+  logDb_fill <- ncdf4::ncatt_get(sos_input, "reach/logDb_hat", "_FillValue")
+  logDb[logDb == logDb_fill$value] <- NA
+  if (!is.na(logDb)) logDb <- 10^logDb
 
   # Check validity of observation data
-  obs_data <- check_observations(width, wse, slope2, dim(nt))
-  if (length(obs_data) == 0) { return(list(valid = FALSE, reach_id = reach_id, nt = nt)) }
+  obs_data <- check_observations(width, wse, slope2)
+  if (length(obs_data) == 0) { return(list(valid = FALSE, reachid = reachid, nt = nt)) }
+
+  # Close files
+  ncdf4::nc_close(swot_input)
+  ncdf4::nc_close(sos_input)
 
   # Create a list of data with reach identifier
   ## TODO mbl, Qb, Qmean_prior -> use real data
-  return(list(valid = TRUE, reach_id = reach_id, nt = nt,
+  return(list(valid = TRUE, reachid = reachid, nt = nt,
               width = obs_data$width, slope2 = obs_data$slope2,
-              wse = obs_data$wse, db = db,
+              wse = obs_data$wse, Db = logDb,
               mbl = 16800, Qb = 15900, Qm = 6625,
               invalid_time = obs_data$invalid_time))
+
 }
 
 #' Checks if observation data is valid.
@@ -51,27 +66,37 @@ get_input_data <- function(swot_file, sos_file, reach_id) {
 #' @param width vector
 #' @param wse vector
 #' @param slope2 vector
-#' @param nt integer
-#'
 #' @return list of valid observations or an empty list if there are none
-check_observations <- function(width, wse, slope2, nt) {
+check_observations <- function(width, wse, slope2) {
   # Test for negative data
   width[width < 0] <- NA
   slope2[slope2 < 0] <- NA
 
-  # Track invalid time
+  # Get invalid width indexes and remove from observation data; test if enough data is present
   invalid_width <- which(is.na(width))
+  width <- width[!is.na(width)]
+  wse <- wse[!is.na(width)]
+  slope2 <- slope2[!is.na(width)]
+  if (length(width) < 5) { return(vector(mode = "list")) }
+
+  # Get invalid wse indexes and remove from observation data; test if enough data is present
   invalid_wse <- which(is.na(wse))
+  wse <- wse[!is.na(wse)]
+  width <- width[!is.na(wse)]
+  slope2 <- slope2[!is.na(wse)]
+  if (length(wse) < 5) { return(vector(mode = "list")) }
+
+  # Get invalid slope2 indexes and remove from observation data; test if enough data is present
   invalid_slope2 <- which(is.na(slope2))
-  invalid_time <- sort(unique(c(invalid_width, invalid_wse, invalid_slope2)))
+  slope2 <- slope2[!is.na(slope2)]
+  wse <- wse[!is.na(slope2)]
+  width <- width[!is.na(slope2)]
+  if (length(slope2) < 5) { return(vector(mode = "list")) }
 
-  # Keep valid data from width, wse, and slope2
-  valid_time <- !c(1:nt) %in% invalid_time
-  width <- width[valid_time]
-  wse <- wse[valid_time]
-  slope2 <- slope2[valid_time]
+  # Concatenate lists of invalid indexes
+  invalid_time <- unique(c(invalid_width, invalid_wse, invalid_slope2))
 
-  # Return a list of valid or invalid observation data
-  if (length(width) < 5 || length(wse) < 5 || length(slope2) < 5) { return(vector(mode = "list")) }
-  else { return(list(width = width, wse = wse, slope2 = slope2, invalid_time = invalid_time)) }
+  # Return list of valid observation data
+  return(list(width = width, wse = wse, slope2 = slope2, invalid_time = invalid_time))
+
 }

@@ -71,7 +71,6 @@ momma <- function(stage, width, slope, Qgage = NA, MBL_prior = NA, Qm_prior, Qb_
   df$Y <- NA # average depth (m)
   df$v <- NA # average velocity (m/s)
   df$Q <- NA # discharge
-  df$Q.constrained <- NA
 
   # initialize the function return package
   diag <- list(gage_constrained = constrain,
@@ -99,8 +98,6 @@ momma <- function(stage, width, slope, Qgage = NA, MBL_prior = NA, Qm_prior, Qb_
                depth_bkfl_solved_obs = NA,
                depth_bkfl_diag_MBL = Ybd_MBL,
                depth_bkfl_diag_Wb_Smean = Ybd_Wb_Smean,
-               zero_flow_stage = NA,
-               bankfull_stage = NA,
                Qmean_prior = Qm_prior,
                Qmean_momma = NA,
                Qmean_momma.constrained = NA)
@@ -298,7 +295,7 @@ momma <- function(stage, width, slope, Qgage = NA, MBL_prior = NA, Qm_prior, Qb_
   #browser()
   if (nrow(df) >= min_nobs_mean){
     nb_tests <- seq(0.008, 0.18, 0.001)
-    Qdiff_obj <- abs(mean(df$Q, na.rm=TRUE) - Qm_prior)
+    Qdiff_obj <- abs(mean(df$Q) - Qm_prior)
     nb_obj <- nb
 
     for (nb in nb_tests){
@@ -312,7 +309,7 @@ momma <- function(stage, width, slope, Qgage = NA, MBL_prior = NA, Qm_prior, Qb_
       # compute discharges for all obs
       df$Q <- df$width * df$Y * df$v # m3/s
 
-      Qdiff <- abs(mean(df$Q, na.rm=TRUE) - Qm_prior)
+      Qdiff <- abs(mean(df$Q) - Qm_prior)
 
       if (Qdiff < Qdiff_obj){
         Qdiff_obj <- Qdiff

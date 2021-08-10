@@ -31,9 +31,8 @@ RUN apt update && apt -y install \
 	&& /usr/bin/Rscript -e "install.packages('doParallel', dependencies=TRUE, repos='http://cran.rstudio.com/')" \
 	&& /usr/bin/Rscript -e "install.packages('foreach', dependencies=TRUE, repos='http://cran.rstudio.com/')" \
 	&& /usr/bin/Rscript -e "install.packages('hydroGOF', dependencies=TRUE, repos='http://cran.rstudio.com/')" \
-	&& /usr/bin/Rscript -e "install.packages('RNetCDF', dependencies=TRUE, repos='http://cran.rstudio.com/')" \
-    && /usr/bin/Rscript -e "install.packages('R.utils', dependencies=TRUE, repos='http://cran.rstudio.com/')" \
-	&& /usr/bin/Rscript -e "install.packages('rjson', dependencies=TRUE, repos='http://cran.rstudio.com/')" 
+	&& /usr/bin/Rscript -e "install.packages('ncdf4', dependencies=TRUE, repos='http://cran.rstudio.com/')" \
+    && /usr/bin/Rscript -e "install.packages('R.utils', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 
 # STAGE 2 set up I/O directories, copy geobamdata installer and R script
 FROM stage1 as stage2
@@ -44,5 +43,5 @@ FROM stage2 as stage3
 LABEL version="1.0" \
 	description="Containerized MOMMA algorithm." \
 	"confluence.contact"="ntebaldi@umass.edu" \
-	"algorithm.contact"="rwdudley@usgs.gov, dmbjerkl@usgs.gov"
+	"algorithm.contact"="rwdudley@usgs.gov,dmbjerkl@usgs.gov"
 ENTRYPOINT [ "/usr/bin/Rscript",  "/app/mommadata/momma_data.R" ]
