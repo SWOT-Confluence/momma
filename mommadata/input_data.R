@@ -23,11 +23,11 @@ get_input_data <- function(swot_file, sos_file, reach_id) {
   slope2 <- RNetCDF::var.get.nc(reach_grp, "slope2")
 
   # Bankfull depth
-  reach_grp = RNetCDF::grp.inq.nc(sos_input, "reaches")$self
+  reach_grp <- RNetCDF::grp.inq.nc(sos_input, "reaches")$self
   reach_ids <- RNetCDF::var.get.nc(reach_grp, "reach_id")
   index <- which(reach_ids==reach_id, arr.ind=TRUE)
-  db <- RNetCDF::var.get.nc(reach_grp, "logDb_hat")[index]
-  db <- exp(db)
+  gbp_grp <- RNetCDF::grp.inq.nc(sos_input, "gbpriors")$self
+  db <- exp(RNetCDF::var.get.nc(gbp_grp, "logDb_hat")[index])
 
   # Close files
   RNetCDF::close.nc(swot_input)
