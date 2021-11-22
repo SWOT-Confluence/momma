@@ -49,164 +49,164 @@ write_data <- function(nc_out, momma_list) {
 
   # Data variable
   RNetCDF::var.def.nc(nc_out, "stage", "NC_DOUBLE", "nt")
-  RNetCDF::att.put.nc(nc_out, "stage", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "stage", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "stage", as.numeric(momma_list$data$stage))
 
   RNetCDF::var.def.nc(nc_out, "width", "NC_DOUBLE", "nt")
-  RNetCDF::att.put.nc(nc_out, "width", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "width", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "width", as.numeric(momma_list$data$width))
 
   RNetCDF::var.def.nc(nc_out, "slope", "NC_DOUBLE", "nt")
-  RNetCDF::att.put.nc(nc_out, "slope", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "slope", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "slope", as.numeric(momma_list$data$slope))
 
   RNetCDF::var.def.nc(nc_out, "Qgage", "NC_DOUBLE", "nt")
-  RNetCDF::att.put.nc(nc_out, "Qgage", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "Qgage", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "Qgage", as.numeric(momma_list$data$Qgage))
 
   RNetCDF::var.def.nc(nc_out, "seg", "NC_DOUBLE", "nt")
-  RNetCDF::att.put.nc(nc_out, "seg", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "seg", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "seg", as.numeric(momma_list$data$seg))
 
   RNetCDF::var.def.nc(nc_out, "n", "NC_DOUBLE", "nt")
-  RNetCDF::att.put.nc(nc_out, "n", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "n", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "n", as.numeric(momma_list$data$n))
 
   RNetCDF::var.def.nc(nc_out, "Y", "NC_DOUBLE", "nt")
-  RNetCDF::att.put.nc(nc_out, "Y", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "Y", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "Y", as.numeric(momma_list$data$Y))
 
   RNetCDF::var.def.nc(nc_out, "v", "NC_DOUBLE", "nt")
-  RNetCDF::att.put.nc(nc_out, "v", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "v", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "v", as.numeric(momma_list$data$v))
 
   RNetCDF::var.def.nc(nc_out, "Q", "NC_DOUBLE", "nt")
-  RNetCDF::att.put.nc(nc_out, "Q", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "Q", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "Q", as.numeric(momma_list$data$Q))
 
   RNetCDF::var.def.nc(nc_out, "Q_constrained", "NC_DOUBLE", "nt")
-  RNetCDF::att.put.nc(nc_out, "Q_constrained", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "Q_constrained", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "Q_constrained", as.numeric(momma_list$data$Q.constrained))
 
   # Output variables
   RNetCDF::var.def.nc(nc_out, "gage_constrained", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "gage_constrained", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "gage_constrained", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "gage_constrained", as.numeric(momma_list$output$gage_constrained))
 
   RNetCDF::var.def.nc(nc_out, "input_MBL_prior", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "input_MBL_prior", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "input_MBL_prior", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "input_MBL_prior", as.numeric(momma_list$output$input_MBL_prior))
 
   RNetCDF::var.def.nc(nc_out, "input_Qm_prior", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "input_Qm_prior", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "input_Qm_prior", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "input_Qm_prior", as.numeric(momma_list$output$input_Qm_prior))
 
   RNetCDF::var.def.nc(nc_out, "input_Qb_prior", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "input_Qb_prior", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "input_Qb_prior", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "input_Qb_prior", as.numeric(momma_list$output$input_Qb_prior))
 
   RNetCDF::var.def.nc(nc_out, "input_Yb_prior", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "input_Yb_prior", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "input_Yb_prior", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "input_Yb_prior", as.numeric(momma_list$output$input_Yb_prior))
 
   RNetCDF::var.def.nc(nc_out, "input_known_ezf", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "input_known_ezf", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "input_known_ezf", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "input_known_ezf", as.numeric(momma_list$output$input_known_ezf))
 
   RNetCDF::var.def.nc(nc_out, "input_known_bkfl_stage", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "input_known_bkfl_stage", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "input_known_bkfl_stage", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "input_known_bkfl_stage", as.numeric(momma_list$output$input_known_bkfl_stage))
 
   RNetCDF::var.def.nc(nc_out, "input_known_nb_seg1", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "input_known_nb_seg1", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "input_known_nb_seg1", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "input_known_nb_seg1", as.numeric(momma_list$output$input_known_nb_seg1))
 
   RNetCDF::var.def.nc(nc_out, "input_known_x_seg1", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "input_known_x_seg1", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "input_known_x_seg1", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "input_known_x_seg1", as.numeric(momma_list$output$input_known_nb_seg1))
 
   RNetCDF::var.def.nc(nc_out, "Qgage_constrained_nb_seg1", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "Qgage_constrained_nb_seg1", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "Qgage_constrained_nb_seg1", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "Qgage_constrained_nb_seg1", as.numeric(momma_list$output$Qgage_constrained_nb_seg1))
 
   RNetCDF::var.def.nc(nc_out, "Qgage_constrained_x_seg1", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "Qgage_constrained_x_seg1", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "Qgage_constrained_x_seg1", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "Qgage_constrained_x_seg1", as.numeric(momma_list$output$Qgage_constrained_x_seg1))
 
   RNetCDF::var.def.nc(nc_out, "input_known_nb_seg2", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "input_known_nb_seg2", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "input_known_nb_seg2", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "input_known_nb_seg2", as.numeric(momma_list$output$input_known_nb_seg2))
 
   RNetCDF::var.def.nc(nc_out, "input_known_x_seg2", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "input_known_x_seg2", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "input_known_x_seg2", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "input_known_x_seg2", as.numeric(momma_list$output$input_known_x_seg2))
 
   RNetCDF::var.def.nc(nc_out, "Qgage_constrained_nb_seg2", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "Qgage_constrained_nb_seg2", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "Qgage_constrained_nb_seg2", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "Qgage_constrained_nb_seg2", as.numeric(momma_list$output$Qgage_constrained_nb_seg2))
 
   RNetCDF::var.def.nc(nc_out, "Qgage_constrained_x_seg2", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "Qgage_constrained_x_seg2", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "Qgage_constrained_x_seg2", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "Qgage_constrained_x_seg2", as.numeric(momma_list$output$Qgage_constrained_x_seg2))
 
   RNetCDF::var.def.nc(nc_out, "n_bkfl_Qb_prior", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "n_bkfl_Qb_prior", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "n_bkfl_Qb_prior", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "n_bkfl_Qb_prior", as.numeric(momma_list$output$n_bkfl_Qb_prior))
 
   RNetCDF::var.def.nc(nc_out, "n_bkfl_final_used", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "n_bkfl_final_used", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "n_bkfl_final_used", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "n_bkfl_final_used", as.numeric(momma_list$output$n_bkfl_final_used))
 
   RNetCDF::var.def.nc(nc_out, "vel_bkfl_Qb_prior", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "vel_bkfl_Qb_prior", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "vel_bkfl_Qb_prior", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "vel_bkfl_Qb_prior", as.numeric(momma_list$output$vel_bkfl_Qb_prior))
 
   RNetCDF::var.def.nc(nc_out, "vel_bkfl_diag_MBL", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "vel_bkfl_diag_MBL", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "vel_bkfl_diag_MBL", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "vel_bkfl_diag_MBL", as.numeric(momma_list$output$vel_bkfl_diag_MBL))
 
   RNetCDF::var.def.nc(nc_out, "Froude_bkfl_diag_Smean", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "Froude_bkfl_diag_Smean", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "Froude_bkfl_diag_Smean", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "Froude_bkfl_diag_Smean", as.numeric(momma_list$output$Froude_bkfl_diag_Smean))
 
   RNetCDF::var.def.nc(nc_out, "width_bkfl_empirical", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "width_bkfl_empirical", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "width_bkfl_empirical", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "width_bkfl_empirical", as.numeric(momma_list$output$width_bkfl_empirical))
 
   RNetCDF::var.def.nc(nc_out, "width_bkfl_solved_obs", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "width_bkfl_solved_obs", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "width_bkfl_solved_obs", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "width_bkfl_solved_obs", as.numeric(momma_list$output$width_bkfl_solved_obs))
 
   RNetCDF::var.def.nc(nc_out, "depth_bkfl_solved_obs", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "depth_bkfl_solved_obs", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "depth_bkfl_solved_obs", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "depth_bkfl_solved_obs", as.numeric(momma_list$output$depth_bkfl_solved_obs))
 
   RNetCDF::var.def.nc(nc_out, "depth_bkfl_diag_MBL", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "depth_bkfl_diag_MBL", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "depth_bkfl_diag_MBL", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "depth_bkfl_diag_MBL", as.numeric(momma_list$output$depth_bkfl_diag_MBL))
 
   RNetCDF::var.def.nc(nc_out, "depth_bkfl_diag_Wb_Smean", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "depth_bkfl_diag_Wb_Smean", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "depth_bkfl_diag_Wb_Smean", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "depth_bkfl_diag_Wb_Smean", as.numeric(momma_list$output$depth_bkfl_diag_Wb_Smean))
 
   RNetCDF::var.def.nc(nc_out, "zero_flow_stage", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "zero_flow_stage", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "zero_flow_stage", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "zero_flow_stage", as.numeric(momma_list$output$zero_flow_stage))
 
   RNetCDF::var.def.nc(nc_out, "bankfull_stage", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "bankfull_stage", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "bankfull_stage", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "bankfull_stage", as.numeric(momma_list$output$bankfull_stage))
 
   RNetCDF::var.def.nc(nc_out, "Qmean_prior", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "Qmean_prior", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "Qmean_prior", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "Qmean_prior", as.numeric(momma_list$output$Qmean_prior))
 
   RNetCDF::var.def.nc(nc_out, "Qmean_momma", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "Qmean_momma", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "Qmean_momma", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "Qmean_momma", as.numeric(momma_list$output$Qmean_momma))
 
   RNetCDF::var.def.nc(nc_out, "Qmean_momma.constrained", "NC_DOUBLE", NA)
-  RNetCDF::att.put.nc(nc_out, "Qmean_momma.constrained", "_FILLVALUE", "NC_DOUBLE", fill)
+  RNetCDF::att.put.nc(nc_out, "Qmean_momma.constrained", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "Qmean_momma.constrained", as.numeric(momma_list$output$Qmean_momma.constrained))
 }
 
