@@ -28,6 +28,9 @@ get_input_data <- function(swot_file, sos_file, reach_id) {
   index <- which(reach_ids==reach_id, arr.ind=TRUE)
   gbp_grp <- RNetCDF::grp.inq.nc(sos_input, "gbpriors/reach")$self
   db <- exp(RNetCDF::var.get.nc(gbp_grp, "logDb_hat")[index])
+  model_grp <- RNetCDF::grp.inq.nc(sos_input, "model")$self
+  Qm <- RNetCDF::var.get.nc(model_grp, "mean_q")[index]
+  Qb <- RNetCDF::var.get.nc(model_grp, "two_year_return_q")[index]
 
   # Close files
   RNetCDF::close.nc(swot_input)
@@ -42,7 +45,7 @@ get_input_data <- function(swot_file, sos_file, reach_id) {
   return(list(valid = TRUE, reach_id = reach_id, nt = nt,
               width = obs_data$width, slope2 = obs_data$slope2,
               wse = obs_data$wse, db = db,
-              mbl = 16800, Qb = 15900, Qm = 6625,
+              mbl = 16800, Qb = Qb, Qm = Qm,
               invalid_time = obs_data$invalid_time))
 }
 
