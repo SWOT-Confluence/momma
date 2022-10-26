@@ -29,7 +29,7 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
   # source("function.find.rating.break.R")
   # source("function.constrain.momma.nb.x.R")
   # source("function.find.zero.flow.stage.R")
-  library('hydroGOF')
+  # library('hydroGOF')
   #-----------------------------------------
   
   #--Global variables/settings------------------------------------
