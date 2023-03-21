@@ -37,6 +37,8 @@ create_momma_list <- function(nt) {
               Qgage = nt_vector,
               seg = nt_vector,
               n = nt_vector,
+              nb = nt_vector,
+              x = nt_vector,
               Y = nt_vector,
               v = nt_vector,
               Q = nt_vector,

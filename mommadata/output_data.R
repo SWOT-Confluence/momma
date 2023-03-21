@@ -72,6 +72,14 @@ write_data <- function(nc_out, momma_list) {
   RNetCDF::att.put.nc(nc_out, "n", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "n", as.numeric(momma_list$data$n))
 
+  RNetCDF::var.def.nc(nc_out, "nb", "NC_DOUBLE", "nt")
+  RNetCDF::att.put.nc(nc_out, "nb", "_FillValue", "NC_DOUBLE", fill)
+  RNetCDF::var.put.nc(nc_out, "nb", as.numeric(momma_list$data$nb))
+
+  RNetCDF::var.def.nc(nc_out, "x", "NC_DOUBLE", "nt")
+  RNetCDF::att.put.nc(nc_out, "x", "_FillValue", "NC_DOUBLE", fill)
+  RNetCDF::var.put.nc(nc_out, "x", as.numeric(momma_list$data$x))
+
   RNetCDF::var.def.nc(nc_out, "Y", "NC_DOUBLE", "nt")
   RNetCDF::att.put.nc(nc_out, "Y", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "Y", as.numeric(momma_list$data$Y))
