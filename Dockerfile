@@ -19,7 +19,7 @@ RUN echo "America/New_York" | tee /etc/timezone \
 		libxml2-dev \
 		tzdata \
     && locale-gen en_US.UTF-8 \
-	&& apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9 \
+	&& apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9 \
 	&& . /etc/lsb-release \
 	&& echo "deb https://cloud.r-project.org/bin/linux/ubuntu ${DISTRIB_CODENAME}-cran40/" >> /etc/apt/sources.list
 

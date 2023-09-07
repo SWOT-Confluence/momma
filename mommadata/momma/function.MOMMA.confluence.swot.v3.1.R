@@ -65,6 +65,14 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
   df <- df[which(!is.na(df$width)),]
   df <- df[which(!is.na(df$slope)),]
 
+    # omit NaN cases among obs
+  df <- df[which(!is.nan(df$stage)),]
+  df <- df[which(!is.nan(df$width)),]
+  df <- df[which(!is.nan(df$slope)),]
+
+  print("df after things")
+  print(df)
+
   # add columns to receive computations
   df$seg <- 1 # stage-width relation segment number; 1 = below bankfull; 2 = above bankfull
   df$n <- NA # Manning's n
@@ -103,9 +111,10 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
 
   # retain only positive slopes
   df <- df[which(df$slope > 0),]
-
+  print("processing df")
+  print(df)
   # if inadequate data return NA results
-  if (nrow(df) < min_nobs) {
+  if (nrow(df) < min_nobs | is.null(nrow(df))) {
     cat("INADEQUATE DATA\n")# message print to screen
     pkg <- list(data = df, output = diag)
     return(pkg)
@@ -227,10 +236,26 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
   
   # Bankfull velocity
   Vb_derived_from_Qb_prior <- Qb_prior / (Wb * Yb) # m/s
-
+  print("bankful velocity")
+  print("qb")
+  print(Qb_prior)
+  print("wb")
+  print(Wb)
+  print("yb")
+  print(Yb)
   # Bankfull Mannings n for all obs
   nb <- (Yb ^ (2/3) * Smean ^ 0.5) / Vb_derived_from_Qb_prior
   nb_prior <- nb
+
+  print("computing bankful manning n")
+  print("y")
+  print(Yb)
+  print("smean")
+  print(Smean)
+  print("vbder")
+  print(Vb_derived_from_Qb_prior)
+
+
   # estimate nb value from empirical formula using slope
   # https://il.water.usgs.gov/proj/nvalues/equations.shtml?equation=09-bray1
   nb_slope <- 0.094 * (Smean ^ (1 / 6)) # Bray and Davar equation
@@ -249,14 +274,38 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
 
   # compute Manning's n  
   df$n <- round(df$nb * ((stage.max - zero.stage)/(df$stage - zero.stage)) ^ df$x, 4)
+  print("computing mannings n")
+  print("nb")
+  print(df$nb)
+  print("df$stage")
+  print(df$stage)
+  print("zero")
+  print(zero.stage)
+  print("max")
+  print(stage.max)
+
   # enforce minimum n-value to avoid n values approaching zero
   df$n[which(df$n < 0.002)] <- 0.002
 
   # compute mean velocities for all obs
   df$v <- (df$Y ^ (2/3) * df$slope ^ 0.5) / df$n # m/s
+  print("computing mean velocity")
+  print("slope")
+  print(df$slope)
+  print("n")
+  print(df$n)
+
 
   # compute discharges for all obs
   df$Q <- df$width * df$Y * df$v # m3/s
+  print("computing q")
+  print("w")
+  print(df$width)
+  print("y")
+  print(df$Y)
+  print("v")
+  print(df$v)
+  print("----")
 
   # If enough observations are available, enforce MOMMA computations to
   # align with Qmean prior
@@ -264,6 +313,10 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
     
     #### 1. Calibrate using nb ####
     nb_tests <- seq(0.002, 0.200, 0.001)
+    print(df$Q)
+    print("q")
+    print(Qm_prior)
+    print("qmprior")
     Qdiff_obj <- abs(mean(df$Q, na.rm=TRUE) - Qm_prior)
     nb_obj <- df$nb[1]
     
@@ -277,10 +330,16 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
       # compute discharges for all obs
       df$Q <- df$width * df$Y * df$v # m3/s
       Qdiff <- abs(mean(df$Q, na.rm=TRUE) - Qm_prior)
-      if (Qdiff < Qdiff_obj){
-        Qdiff_obj <- Qdiff
-        nb_obj <- nbt
+      print(Qdiff)
+      print(Qdiff_obj)
+      print("one")
+      if (!(is.na(Qdiff) | is.na(Qdiff_obj))){
+        if (Qdiff < Qdiff_obj){
+          Qdiff_obj <- Qdiff
+          nb_obj <- nbt
+        }
       }
+
     }# nbt in nb_tests
     # assign best nb to dataframe
     df$nb <- nb_obj
@@ -300,6 +359,7 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
       # compute discharges for all obs
       df$Q <- df$width * df$Y * df$v # m3/s
       Qdiff <- abs(mean(df$Q, na.rm=TRUE) - Qm_prior)
+      print("two")
       if (Qdiff < Qdiff_obj){
         Qdiff_obj <- Qdiff
         x_obj <- x

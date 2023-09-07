@@ -4,7 +4,7 @@ source("/app/mommadata/output_data.R")
 source("/app/mommadata/momma/function.find.rating.break.R")
 source("/app/mommadata/momma/function.find.zero.flow.stage.R")
 source("/app/mommadata/momma/function.constrain.momma.nb.x.R")
-source("/app/mommadata/momma/function.MOMMA.confluence.swot.v3.1.R")
+source("/app/mommadata/momma/function.MOMMA.confluence.swot.v3.2.R")
 
 #' Identify reach and locate SWOT and SoS files.
 #'
@@ -91,8 +91,10 @@ run_momma <- function() {
   # Identify reach files to process
   args <- R.utils::commandArgs(trailingOnly = TRUE)
   reach_file <- ifelse(is.null(args), "reaches.json", args[1])
+  print("reach")
+  print(reach_file)
   io_data <- get_reach_files(input_dir, reach_file)
-  
+  print(as.character(io_data$reach_id))
   # Get SWOT and SoS input data
   reach_data <- get_input_data(swot_file = io_data$swot_file,
                                sos_file = io_data$sos_file,
