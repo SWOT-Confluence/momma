@@ -105,8 +105,8 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
   df <- df[which(df$slope > 0),]
 
   # if inadequate data return NA results
-  if (nrow(df) < min_nobs) {
-    cat("INADEQUATE DATA\n")# message print to screen
+  if (nrow(df) < min_nobs | is.na(Qm_prior)) {
+    cat("INADEQUATE NUMBER OF OBSERVATIONS or MISSING Qmean PRIOR VALUE\n")# message print to screen
     pkg <- list(data = df, output = diag)
     return(pkg)
   }
