@@ -1,6 +1,6 @@
 # Modified Optimized Manning Method Algorithm (MOMMA)
 # Authors: RWDudley, DMBjerklie
-# v3.1 October 2022
+# v3.3 November 2023
 # MOMMA configured for CONFLUENCE application
 # Uses input data (SWOT observations)
 #   observed stages (stage, vector)
@@ -43,6 +43,11 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
   n.min.seg = 3 # number of obs in the segment
   stage.range.min.seg = stage.range.min / 2 # meter; range in stage to retain a stage-width relation segment
   breakpoint.method <- "wd.ratio" # method to identify possible bankfull stage
+  resist.min <- 0.01 # minimum allowable Manning n-value
+  resist.max <- 0.20 # maximum allowable Manning n-value
+  x.default <- 1.0 # default value for exponent x
+  x.min <- -1.0 # minimum allowable value for exponent x
+  x.max <- 2.0 # maximum allowable value for exponent x
   #---------------------------------------------------------------
 
   # initialize diagnostic values----------------------
@@ -99,7 +104,8 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
                bankfull_stage = NA,
                Qmean_prior = Qm_prior,
                Qmean_momma = NA,
-               Qmean_momma.constrained = NA)
+               Qmean_momma.constrained = NA,
+               width_stage_corr = NA)
 
   # retain only positive slopes
   df <- df[which(df$slope > 0),]
@@ -244,7 +250,7 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
   }
 
   # enforce min/max
-  nb_minmax <- max(0.002, min(0.20, nb_mean))
+  nb_minmax <- max(resist.min, min(resist.max, nb_mean))
   # assign to dataframe
   df$nb <- nb_minmax
 
@@ -252,12 +258,12 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
   df$Y <- (df$stage - zero.stage) * b # m
 
   # assign default value for exponent x
-  df$x <- 1.0
+  df$x <- x.default
 
   # compute Manning's n
   df$n <- round(df$nb * ((stage.max - zero.stage)/(df$stage - zero.stage)) ^ df$x, 4)
   # enforce minimum n-value to avoid n values approaching zero
-  df$n[which(df$n < 0.002)] <- 0.002
+  df$n[which(df$n < resist.min)] <- resist.min
 
   # compute mean velocities for all obs
   df$v <- (df$Y ^ (2/3) * df$slope ^ 0.5) / df$n # m/s
@@ -270,38 +276,39 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
   if (nrow(df) >= min_nobs_mean){
 
     #### 1. Calibrate using nb ####
-    nb_tests <- seq(0.002, 0.200, 0.001)
+    nb_tests <- seq(resist.min, resist.max, 0.001)
     Qdiff_obj <- abs(mean(df$Q, na.rm=TRUE) - Qm_prior)
     nb_obj <- df$nb[1]
 
     for (nbt in nb_tests){
       # compute Manning's n
       df$n <- round(nbt * ((stage.max - zero.stage)/(df$stage - zero.stage)) ^ df$x, 4)
-      # enforce minimum n-value to avoid n values approaching zero
-      df$n[which(df$n < 0.002)] <- 0.002
+      # enforce min/max n-values
+      df$n[which(df$n < resist.min)] <- resist.min
+      df$n[which(df$n > resist.max)] <- resist.max
       # compute mean velocities for all obs
       df$v <- (df$Y ^ (2/3) * df$slope ^ 0.5) / df$n # m/s
       # compute discharges for all obs
       df$Q <- df$width * df$Y * df$v # m3/s
       Qdiff <- abs(mean(df$Q, na.rm=TRUE) - Qm_prior)
 
-      if !(is.na(Qdiff) | is.na(Qdiff_obj) ){
-        if (Qdiff < Qdiff_obj){
+      if (is.na(Qdiff) | is.na(Qdiff_obj) ){
+          pkg <- list(data = df, output = diag)
+          return(pkg)
+        else{
+          if (Qdiff < Qdiff_obj){
             Qdiff_obj <- Qdiff
             nb_obj <- nbt
           }
-        else{
-          pkg <- list(data = df, output = diag)
-          return(pkg)
         }
-        }
+      }
 
     }# nbt in nb_tests
     # assign best nb to dataframe
     df$nb <- nb_obj
 
     #### 2. Fine tune calibration using x ####
-    x_tests <- seq(-1, 2, 0.01)
+    x_tests <- seq(x.min, x.max, 0.01)
     Qdiff_obj <- abs(mean(df$Q, na.rm=TRUE) - Qm_prior)
     x_obj <- df$x[1]
 
@@ -309,7 +316,7 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
       # compute Manning's n
       df$n <- round(df$nb * ((stage.max - zero.stage)/(df$stage - zero.stage)) ^ x, 4)
       # enforce minimum n-value to avoid n values approaching zero
-      df$n[which(df$n < 0.002)] <- 0.002
+      df$n[which(df$n < resist.min)] <- resist.min
       # compute mean velocities for all obs
       df$v <- (df$Y ^ (2/3) * df$slope ^ 0.5) / df$n # m/s
       # compute discharges for all obs
@@ -323,14 +330,14 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
     # assign best x to dataframe
     df$x <- x_obj
 
+    # compute final calibrated values
     # compute Manning's n
     df$n <- round(df$nb * ((stage.max - zero.stage)/(df$stage - zero.stage)) ^ df$x, 4)
-    # enforce minimum n-value to avoid n values approaching zero
-    df$n[which(df$n < 0.002)] <- 0.002
-
+    # enforce min/max n-values
+    df$n[which(df$n < resist.min)] <- resist.min
+    df$n[which(df$n > resist.max)] <- resist.max
     # compute mean velocities for all obs
     df$v <- (df$Y ^ (2/3) * df$slope ^ 0.5) / df$n # m/s
-
     # compute discharges for all obs
     df$Q <- df$width * df$Y * df$v # m3/s
 
@@ -373,11 +380,12 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
       }# if enough gaged flows available to constrain with
     }# segment; s == 1 below bankfull; s == 2 above bankfull
 
-    # compute calibrated/constrained flows
+    # compute final calibrated/constrained values
     # compute the constrained Mannings n values using the flow parameters
     df$n.constrained <- round(df$nb * ((stage.max - zero.stage)/(df$stage - zero.stage)) ^ df$x, 4)
-    # enforce minimum n-value to avoid n values approaching zero
-    df$n.constrained[which(df$n.constrained < 0.002)] <- 0.002
+    # enforce min/max n-values
+    df$n.constrained[which(df$n.constrained < resist.min)] <- resist.min
+    df$n.constrained[which(df$n.constrained > resist.max)] <- resist.max
     # compute constrained mean velocities with derived Mannings n
     df$v.constrained <- round(df$Y ^ (2/3) * df$slope ^ 0.5 / df$n.constrained, 3)
     # compute flows with widths, depths, and constrained velocities
@@ -388,7 +396,7 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
 
   # Compute diagnostic values and assemble with MOMMA computed values
   # Diagnostic variables below are computed to serve as bases of comparison
-  # to algorithm outputs; a kind of 'reality check'
+  # to algorithm outputs
   Frbd <- 2.85 * Smean ^ 0.31 # Bankfull Froude number derived from mean slope
   # Bankfull mean depth derived from bankfull width and mean slope
   Ybd_Wb_Smean <- 0.08 * Wb ^ 0.34 * Smean ^ -0.24 # m
@@ -420,7 +428,8 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
                bankfull_stage = bkfl_stage,
                Qmean_prior = Qm_prior,
                Qmean_momma = signif(mean(df$Q), 3),
-               Qmean_momma.constrained = signif(mean(df$Q.constrained), 3))
+               Qmean_momma.constrained = signif(mean(df$Q.constrained), 3),
+               width_stage_corr = cr$estimate)
 
   # attach flow computations and diagnostics and return the package
   pkg <- list(data = df, output = diag)
