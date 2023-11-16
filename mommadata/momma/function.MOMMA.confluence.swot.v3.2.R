@@ -284,10 +284,18 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
       # compute discharges for all obs
       df$Q <- df$width * df$Y * df$v # m3/s
       Qdiff <- abs(mean(df$Q, na.rm=TRUE) - Qm_prior)
-      if (Qdiff < Qdiff_obj){
-        Qdiff_obj <- Qdiff
-        nb_obj <- nbt
-      }
+
+      if !(is.na(Qdiff) | is.na(Qdiff_obj) ){
+        if (Qdiff < Qdiff_obj){
+            Qdiff_obj <- Qdiff
+            nb_obj <- nbt
+          }
+        else{
+          pkg <- list(data = df, output = diag)
+          return(pkg)
+        }
+        }
+
     }# nbt in nb_tests
     # assign best nb to dataframe
     df$nb <- nb_obj
