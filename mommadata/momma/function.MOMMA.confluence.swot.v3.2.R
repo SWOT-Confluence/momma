@@ -294,16 +294,17 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
 
       if (is.na(Qdiff) | is.na(Qdiff_obj) ){
           pkg <- list(data = df, output = diag)
-          return(pkg)
-        else{
+          return(pkg)}
+      else{
           if (Qdiff < Qdiff_obj){
             Qdiff_obj <- Qdiff
             nb_obj <- nbt
           }
         }
-      }
+    }
+      
 
-    }# nbt in nb_tests
+    # nbt in nb_tests
     # assign best nb to dataframe
     df$nb <- nb_obj
 

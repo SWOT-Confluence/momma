@@ -68,6 +68,7 @@ create_momma_list <- function(nt) {
                 depth_bkfl_diag_Wb_Smean = NA,
                 zero_flow_stage = NA,
                 bankfull_stage = NA,
+                width_stage_corr = NA,
                 Qmean_prior = NA,
                 Qmean_momma = NA,
                 Qmean_momma.constrained = NA)
