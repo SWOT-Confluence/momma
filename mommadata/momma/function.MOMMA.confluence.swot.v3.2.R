@@ -1,6 +1,6 @@
 # Modified Optimized Manning Method Algorithm (MOMMA)
 # Authors: RWDudley, DMBjerklie
-# v3.3 November 2023
+# v3.3.1 November 2023
 # MOMMA configured for CONFLUENCE application
 # Uses input data (SWOT observations)
 #   observed stages (stage, vector)
@@ -19,7 +19,7 @@
 # known_nb_seg[n] and known_x_seg[n] are flow law params if they have already been calibrated and are now known
 # constrain: Boolean whether to calibrate to gage data for gage-constrained product
 #
-momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
+momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
                   Yb_prior = NA, known_ezf = NA, known_bkfl_stage = NA,
                   known_nb_seg1 = NA, known_x_seg1 = NA,
                   known_nb_seg2 = NA, known_x_seg2 = NA,
@@ -29,6 +29,7 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
   # source("function.find.rating.break.R")
   # source("function.constrain.momma.nb.x.R")
   # source("function.find.zero.flow.stage.R")
+  # source("function.calibrate.Qmean.R")
   # library('hydroGOF')
   #-----------------------------------------
 
@@ -137,7 +138,7 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
   stage.range <- stage.max - stage.min
 
   # compute mean observed slope
-  Smean <- mean(df$slope)
+  Smean <- mean(df$slope, na.rm = TRUE)
 
   # channel shape coefficient b based on shape param
   b <- 1 - (1 / (1 + shape_param))
@@ -229,8 +230,8 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
 
   # zero.stage now known. Compute mean bankfull depth
   Yb <- b * (bkfl_stage - zero.stage)
-  # --------------------------------------------------
 
+  # --------------------------------------------------
   # estimate nb value from empirical formula using slope
   # https://il.water.usgs.gov/proj/nvalues/equations.shtml?equation=09-bray1
   nb_slope <- 0.094 * (Smean ^ (1 / 6)) # Bray and Davar equation
@@ -262,8 +263,9 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
 
   # compute Manning's n
   df$n <- round(df$nb * ((stage.max - zero.stage)/(df$stage - zero.stage)) ^ df$x, 4)
-  # enforce minimum n-value to avoid n values approaching zero
+  # enforce min/max n-values
   df$n[which(df$n < resist.min)] <- resist.min
+  df$n[which(df$n > resist.max)] <- resist.max
 
   # compute mean velocities for all obs
   df$v <- (df$Y ^ (2/3) * df$slope ^ 0.5) / df$n # m/s
@@ -271,78 +273,60 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
   # compute discharges for all obs
   df$Q <- df$width * df$Y * df$v # m3/s
 
-  # If enough observations are available, enforce MOMMA computations to
-  # align with Qmean prior
+  ###########################################################
+  # If enough observations are available, calibrate MOMMA to Qmean prior
   if (nrow(df) >= min_nobs_mean){
 
-    #### 1. Calibrate using nb ####
-    nb_tests <- seq(resist.min, resist.max, 0.001)
-    Qdiff_obj <- abs(mean(df$Q, na.rm=TRUE) - Qm_prior)
-    nb_obj <- df$nb[1]
 
-    for (nbt in nb_tests){
-      # compute Manning's n
-      df$n <- round(nbt * ((stage.max - zero.stage)/(df$stage - zero.stage)) ^ df$x, 4)
-      # enforce min/max n-values
-      df$n[which(df$n < resist.min)] <- resist.min
-      df$n[which(df$n > resist.max)] <- resist.max
-      # compute mean velocities for all obs
-      df$v <- (df$Y ^ (2/3) * df$slope ^ 0.5) / df$n # m/s
-      # compute discharges for all obs
-      df$Q <- df$width * df$Y * df$v # m3/s
-      Qdiff <- abs(mean(df$Q, na.rm=TRUE) - Qm_prior)
+    cal.Qmean <- calibrate.qmean.prior(dframe = df, Qmean_prior = Qm_prior,
+                                       h.max = stage.max, zero.h = zero.stage,
+                                       nb.min = resist.min, nb.max = resist.max,
+                                       exp.x.min = x.min, exp.x.max = x.max)
 
-      if (is.na(Qdiff) | is.na(Qdiff_obj) ){
-          pkg <- list(data = df, output = diag)
-          return(pkg)}
-      else{
-          if (Qdiff < Qdiff_obj){
-            Qdiff_obj <- Qdiff
-            nb_obj <- nbt
-          }
-        }
+    # bad input catch
+    if (length(cal.Qmean) == 1){
+      cat(paste0(cal.Qmean, "\n"))
+      pkg <- list(data = df, output = diag)
+      return(pkg)
+    }else{
+      df <- cal.Qmean
     }
-      
 
-    # nbt in nb_tests
-    # assign best nb to dataframe
-    df$nb <- nb_obj
 
-    #### 2. Fine tune calibration using x ####
-    x_tests <- seq(x.min, x.max, 0.01)
-    Qdiff_obj <- abs(mean(df$Q, na.rm=TRUE) - Qm_prior)
-    x_obj <- df$x[1]
+    # check for channel thalweg too shallow
+    if (df$nb[1] == resist.min & zero.stage > zero.stage.floor){
+      # make channel deeper using the zero.stage.floor value
+      zero.stage <- zero.stage.floor
+      # Compute mean bankfull depth
+      Yb <- b * (bkfl_stage - zero.stage)
+      # Compute mean depths for all obs
+      df$Y <- (df$stage - zero.stage) * b # m
 
-    for (x in x_tests){
-      # compute Manning's n
-      df$n <- round(df$nb * ((stage.max - zero.stage)/(df$stage - zero.stage)) ^ x, 4)
-      # enforce minimum n-value to avoid n values approaching zero
-      df$n[which(df$n < resist.min)] <- resist.min
-      # compute mean velocities for all obs
-      df$v <- (df$Y ^ (2/3) * df$slope ^ 0.5) / df$n # m/s
-      # compute discharges for all obs
-      df$Q <- df$width * df$Y * df$v # m3/s
-      Qdiff <- abs(mean(df$Q, na.rm=TRUE) - Qm_prior)
-      if (Qdiff < Qdiff_obj){
-        Qdiff_obj <- Qdiff
-        x_obj <- x
-      }
-    }# x in x_tests
-    # assign best x to dataframe
-    df$x <- x_obj
+      # recalibrate
+      df <- calibrate.qmean.prior(dframe = df, Qmean_prior = Qm_prior,
+                                         h.max = stage.max, zero.h = zero.stage,
+                                         nb.min = resist.min, nb.max = resist.max,
+                                         exp.x.min = x.min, exp.x.max = x.max)
+    }
 
-    # compute final calibrated values
-    # compute Manning's n
-    df$n <- round(df$nb * ((stage.max - zero.stage)/(df$stage - zero.stage)) ^ df$x, 4)
-    # enforce min/max n-values
-    df$n[which(df$n < resist.min)] <- resist.min
-    df$n[which(df$n > resist.max)] <- resist.max
-    # compute mean velocities for all obs
-    df$v <- (df$Y ^ (2/3) * df$slope ^ 0.5) / df$n # m/s
-    # compute discharges for all obs
-    df$Q <- df$width * df$Y * df$v # m3/s
+    # check for channel thalweg too deep
+    if (df$nb[1] == resist.max & zero.stage < stage.min){
+      # make channel shallower by splitting the difference between the
+      # zero.stage estimate and the lowest observed stage
+      zero.stage <- (zero.stage + stage.min) / 2
+      # Compute mean bankfull depth
+      Yb <- b * (bkfl_stage - zero.stage)
+      # Compute mean depths for all obs
+      df$Y <- (df$stage - zero.stage) * b # m
 
-  }# if enough obs, adjust x to match Qmean
+      # recalibrate
+      df <- calibrate.qmean.prior(dframe = df, Qmean_prior = Qm_prior,
+                                  h.max = stage.max, zero.h = zero.stage,
+                                  nb.min = resist.min, nb.max = resist.max,
+                                  exp.x.min = x.min, exp.x.max = x.max)
+    }
+
+  }# if enough obs, calibrate
 
   ###########################################################
   # If constrain = TRUE and Qgage has coincident daily gage-observed flows
@@ -370,7 +354,9 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
                                      widths = cdf$width, slopes = cdf$slope,
                                      zeroQ.stage = zero.stage,
                                      maxDepth.stage = stage.max,
-                                     shape.param = shape_param)
+                                     shape.param = shape_param,
+                                     nb.range = c(resist.min, resist.max),
+                                     x.range = c(x.min, x.max))
         }
 
         df$nb[which(df$seg == s)] <- mo[1]
@@ -395,11 +381,9 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior,
   }# constrained flow-calibration option using coincident daily gage-observed Qs
   ##################################################################
 
-  # Compute diagnostic values and assemble with MOMMA computed values
-  # Diagnostic variables below are computed to serve as bases of comparison
-  # to algorithm outputs
+  # Compute diagnostic Froude number
   Frbd <- 2.85 * Smean ^ 0.31 # Bankfull Froude number derived from mean slope
-  # Bankfull mean depth derived from bankfull width and mean slope
+  # Compute diagnostic bankfull mean depth derived from bankfull width and mean slope
   Ybd_Wb_Smean <- 0.08 * Wb ^ 0.34 * Smean ^ -0.24 # m
 
   if (!constrain){df$Q.constrained <- NA}
