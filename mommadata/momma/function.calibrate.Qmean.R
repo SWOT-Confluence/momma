@@ -46,10 +46,10 @@ calibrate.qmean.prior <- function(dframe, Qmean_prior, h.max, zero.h,
 
   # compute final calibrated values
   # compute Manning's n
-  dframe$n <- round(dframe$nb * ((stage.max - zero.stage)/(dframe$stage - zero.stage)) ^ dframe$x, 4)
+  dframe$n <- round(dframe$nb * ((h.max - zero.h)/(dframe$stage - zero.h)) ^ dframe$x, 4)
   # enforce min/max n-values
-  dframe$n[which(dframe$n < resist.min)] <- resist.min
-  dframe$n[which(dframe$n > resist.max)] <- resist.max
+  dframe$n[which(dframe$n < nb.min)] <- nb.min
+  dframe$n[which(dframe$n > nb.max)] <- nb.max
   # compute mean velocities for all obs
   dframe$v <- (dframe$Y ^ (2/3) * dframe$slope ^ 0.5) / dframe$n # m/s
   # compute discharges for all obs
