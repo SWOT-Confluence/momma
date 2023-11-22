@@ -277,6 +277,7 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
   # If enough observations are available, calibrate MOMMA to Qmean prior
   if (nrow(df) >= min_nobs_mean){
 
+
     cal.Qmean <- calibrate.qmean.prior(dframe = df, Qmean_prior = Qm_prior,
                                        h.max = stage.max, zero.h = zero.stage,
                                        nb.min = resist.min, nb.max = resist.max,
@@ -290,6 +291,7 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
     }else{
       df <- cal.Qmean
     }
+
 
     # check for channel thalweg too shallow
     if (df$nb[1] == resist.min & zero.stage > zero.stage.floor){

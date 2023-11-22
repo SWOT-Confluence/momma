@@ -198,10 +198,15 @@ write_data <- function(nc_out, momma_list) {
   RNetCDF::var.def.nc(nc_out, "Qmean_momma", "NC_DOUBLE", NA)
   RNetCDF::att.put.nc(nc_out, "Qmean_momma", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "Qmean_momma", as.numeric(momma_list$output$Qmean_momma))
-
+# width_stage_corr
   RNetCDF::var.def.nc(nc_out, "Qmean_momma.constrained", "NC_DOUBLE", NA)
   RNetCDF::att.put.nc(nc_out, "Qmean_momma.constrained", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "Qmean_momma.constrained", as.numeric(momma_list$output$Qmean_momma.constrained))
+
+
+  RNetCDF::var.def.nc(nc_out, "width_stage_corr", "NC_DOUBLE", NA)
+  RNetCDF::att.put.nc(nc_out, "width_stage_corr", "_FillValue", "NC_DOUBLE", fill)
+  RNetCDF::var.put.nc(nc_out, "width_stage_corr", as.numeric(momma_list$output$width_stage_corr))
 }
 
 #' Convert data.frame parameter to a named list
@@ -239,6 +244,7 @@ concatenate_invalid <- function(momma_list, invalid_time) {
     momma_list$data$Q <- append(momma_list$data$Q, NA, after = index - 1)
     momma_list$data$Qgage <- append(momma_list$data$Qgage, NA, after = index - 1)
     momma_list$data$Q.constrained <- append(momma_list$data$Q.constrained, NA, after = index - 1)
+    momma_list$data$width_stage_corr <- append(momma_list$data$width_stage_corr, NA, after = index - 1)
   }
 
   return(momma_list)
@@ -255,6 +261,7 @@ replace_invalid <- function(momma_list) {
   momma_list$data$Q[is.nan(momma_list$data$Q)] <- NA
   momma_list$data$Qgage[is.nan(momma_list$data$Qgage)] <- NA
   momma_list$data$Q.constrained[is.nan(momma_list$data$Q.constrained)] <- NA
+  momma_list$data$width_stage_corr[is.nan(momma_list$data$width_stage_corr)] <- NA
   return(momma_list)
 }
 
