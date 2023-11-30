@@ -9,7 +9,7 @@ calibrate.qmean.prior <- function(dframe, Qmean_prior, h.max, zero.h,
   nb_objective <- dframe$nb[1]
   x_tests <- seq(exp.x.min, exp.x.max, 0.01)
   x_objective <- dframe$x[1]
-  Qdiff_obj <- abs(mean(dframe$Q, na.rm=TRUE) - Qmean_prior)
+  Qdiff_obj <- 10^9
 
   for (nbt in nb_tests){
     for (x in x_tests){
