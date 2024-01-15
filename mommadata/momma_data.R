@@ -94,8 +94,13 @@ run_momma <- function() {
   args <- R.utils::commandArgs(trailingOnly = TRUE)
   # reach_file <- ifelse(is.null(args), "reaches.json", args[1])
 
-  all_reach_jsons = Sys.glob(file.path(input_dir, 'reaches*'))
-  reach_file = all_reach_jsons[strtoi(args[1])]
+  
+
+  if (length(args)>=1){
+      reach_file = file.path(input_dir, paste('reaches_',strtoi(args[1]),'.json'))
+  } else{
+      reach_file = file.path(input_dir, 'reaches.json')
+  }
 
   print("reach")
   print(reach_file)
