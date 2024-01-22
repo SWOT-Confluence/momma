@@ -16,7 +16,7 @@ source("/app/mommadata/momma/function.MOMMA.confluence.swot.v3.2.R")
 get_reach_files <- function(input_dir, reaches_json){
   # Get reach identifier from array environment variable
   index = strtoi(Sys.getenv("AWS_BATCH_JOB_ARRAY_INDEX")) + 1
-  json_data <- rjson::fromJSON(file=file.path(input_dir, reaches_json))[[index]]
+  json_data <- rjson::fromJSON(file=reaches_json)[[index]]
   return(list(reach_id = json_data$reach_id,
               swot_file = file.path(input_dir, "swot", json_data$swot),
               sos_file = file.path(input_dir, "sos", json_data$sos)))
@@ -92,7 +92,16 @@ run_momma <- function() {
   
   # Identify reach files to process
   args <- R.utils::commandArgs(trailingOnly = TRUE)
-  reach_file <- ifelse(is.null(args), "reaches.json", args[1])
+  # reach_file <- ifelse(is.null(args), "reaches.json", args[1])
+
+  
+
+  if (length(args)>=1){
+      reach_file = file.path(input_dir, paste('reaches_',strtoi(args[1]),'.json'))
+  } else{
+      reach_file = file.path(input_dir, 'reaches.json')
+  }
+
   print("reach")
   print(reach_file)
   io_data <- get_reach_files(input_dir, reach_file)
