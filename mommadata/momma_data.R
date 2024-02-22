@@ -92,11 +92,11 @@ run_momma <- function() {
   # Identify reach files to process
   args <- R.utils::commandArgs(trailingOnly = TRUE)
   if (length(args)>=2){
-      index = strtoi(args[1])
+      index = strtoi(args[1]) + 1
       reaches_json = file.path(input_dir, paste(args[2]))
       min_nobs = as.integer(args[3])
   } else if (length(args)>=1) {
-      index = strtoi(args[1])
+      index = strtoi(args[1]) + 1
       reaches_json = file.path(input_dir, 'reaches.json')
       min_nobs = 3
   } else{
