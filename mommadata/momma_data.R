@@ -104,10 +104,9 @@ run_momma <- function() {
       reaches_json = file.path(input_dir, 'reaches.json')
       min_nobs = 3
   }
-
-  print("reach")
-  print(reach_file)
-  io_data <- get_reach_files(input_dir, reach_file, index)
+  
+  print(paste("reaches_json: ", reaches_json))
+  io_data <- get_reach_files(input_dir, reaches_json, index)
   print(as.character(io_data$reach_id))
   # Get SWOT and SoS input data
   reach_data <- get_input_data(swot_file = io_data$swot_file,
