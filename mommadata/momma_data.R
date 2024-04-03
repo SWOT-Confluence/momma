@@ -97,7 +97,7 @@ run_momma <- function() {
   
 
   if (length(args)>=1){
-      reach_file = file.path(input_dir, paste('reaches_',strtoi(args[1]),'.json'))
+      reach_file = file.path(input_dir, paste('reaches_',strtoi(args[1]),'.json', sep = ""))
   } else{
       reach_file = file.path(input_dir, 'reaches.json')
   }
