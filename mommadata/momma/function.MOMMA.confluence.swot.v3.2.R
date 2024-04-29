@@ -35,7 +35,7 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
 
   #--Global variables/settings------------------------------------
   min_nobs <- 5 # minimum number of observations required to entertain making flow calculations
-  min_nobs_mean <- 10 # minimum number of observations required to coerce mean of estimated flows to match Qmean_prior
+  min_nobs_mean <- 1 # minimum number of observations required to coerce mean of estimated flows to match Qmean_prior
   shape_param <- 2 # channel shape parameter. 2 = parabolic
   # REQUIRE minimum number of obs and delta stage to look for breakpoints
   n.min = 7 # minimum number of obs required to look for breakpoint in stage-width relation
@@ -154,13 +154,17 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
   if (stage.range > stage.range.min){
 
     if (is.na(known_bkfl_stage)){
+      print("We don't have a known bankful stage")
       if (nrow(df) >= n.min & (stage.range > stage.range.min)){
+        print( "so we are solving for bankful stage...")
         bkfl_stage <- find.rating.break(df$width, df$stage, shape.param,
                                              method = breakpoint.method)
       }else{
+        print("We are replacing the bankful stage with the max...")
         bkfl_stage <- stage.max
       }
     }else{
+      print("We are setting the bankful stage to a known bankful stage...")
       bkfl_stage <- known_bkfl_stage
     }
 
