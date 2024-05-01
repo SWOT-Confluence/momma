@@ -5,7 +5,7 @@ source("/app/mommadata/momma/function.find.rating.break.R")
 source("/app/mommadata/momma/function.find.zero.flow.stage.R")
 source("/app/mommadata/momma/function.constrain.momma.nb.x.R")
 source("/app/mommadata/momma/function.calibrate.Qmean.R")
-source("/app/mommadata/momma/function.MOMMA.confluence.swot.v3.2.R")
+source("/app/mommadata/momma/function.MOMMA.confluence.swot.v3.3.2.R")
 
 #' Identify reach and locate SWOT and SoS files.
 #'
@@ -116,12 +116,15 @@ run_momma <- function() {
   
   # Run MOMMA on valid input reach data
   if (reach_data$valid == TRUE) {
+    print('running momma')
     momma_results <- momma(stage = reach_data$wse,
                            width = reach_data$width,
                            slope = reach_data$slope2,
                            Qb_prior = reach_data$Qb,
                            Qm_prior = reach_data$Qm,
                            Yb_prior = reach_data$db)
+  }else{
+    print('decided not to run')
   }
   
   # Write posteriors to netCDF

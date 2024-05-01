@@ -31,6 +31,13 @@ get_input_data <- function(swot_file, sos_file, reach_id) {
   model_grp <- RNetCDF::grp.inq.nc(sos_input, "model")$self
   Qm <- RNetCDF::var.get.nc(model_grp, "mean_q")[index]
   Qb <- RNetCDF::var.get.nc(model_grp, "two_year_return_q")[index]
+
+  # Gauges
+  # need an argument tht acalls it constrained or unconstrained
+  # then finds what continent and what river has that gauge and then pull the times for that gauge obs
+
+  gauge_grp <- RNetCDF::grp.inq.nc(sos_input, "reaches")$self
+
   print(index)
   print("-----index----")
 
