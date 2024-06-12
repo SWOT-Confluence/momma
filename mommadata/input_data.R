@@ -7,7 +7,8 @@
 #' @param reach_id integer unique reach identifier
 #'
 #' @return list matrix of reach data (both valid and invalid)
-get_input_data <- function(swot_file, sos_file, reach_id) {
+get_input_data <- function(swot_file, sos_file, reach_id, min_nobs) {
+  print(min_nobs)
 
   # Open files for reading and get data
   swot_input <- RNetCDF::open.nc(swot_file)
@@ -31,6 +32,13 @@ get_input_data <- function(swot_file, sos_file, reach_id) {
   model_grp <- RNetCDF::grp.inq.nc(sos_input, "model")$self
   Qm <- RNetCDF::var.get.nc(model_grp, "mean_q")[index]
   Qb <- RNetCDF::var.get.nc(model_grp, "two_year_return_q")[index]
+
+  # Gauges
+  # need an argument tht acalls it constrained or unconstrained
+  # then finds what continent and what river has that gauge and then pull the times for that gauge obs
+
+  gauge_grp <- RNetCDF::grp.inq.nc(sos_input, "reaches")$self
+
   print(index)
   print("-----index----")
 
@@ -39,7 +47,9 @@ get_input_data <- function(swot_file, sos_file, reach_id) {
   RNetCDF::close.nc(sos_input)
 
   # Check validity of observation data
-  obs_data <- check_observations(width, wse, slope2, dim(nt))
+  obs_data <- check_observations(width, wse, slope2, dim(nt), min_nobs)
+  print('here are obs_data')
+  print(obs_data)
   if (length(obs_data) == 0) { return(list(valid = FALSE, reach_id = reach_id, nt = nt)) }
 
   # Create a list of data with reach identifier
@@ -59,24 +69,35 @@ get_input_data <- function(swot_file, sos_file, reach_id) {
 #' @param nt integer
 #'
 #' @return list of valid observations or an empty list if there are none
-check_observations <- function(width, wse, slope2, nt) {
+check_observations <- function(width, wse, slope2, nt, min_nobs) {
+  print('obs')
+  print(width)
+  print(wse)
+  print(slope2)
+  print(nt)
   # Test for negative data
   width[width < 0] <- NA
   slope2[slope2 < 0] <- NA
+  print('after')
+  print(width)
+  print(slope2)
 
   # Track invalid time
   invalid_width <- which(is.na(width))
   invalid_wse <- which(is.na(wse))
   invalid_slope2 <- which(is.na(slope2))
   invalid_time <- sort(unique(c(invalid_width, invalid_wse, invalid_slope2)))
+  print('time')
+  print(invalid_time)
 
   # Keep valid data from width, wse, and slope2
   valid_time <- !c(1:nt) %in% invalid_time
+
   width <- width[valid_time]
   wse <- wse[valid_time]
   slope2 <- slope2[valid_time]
 
   # Return a list of valid or invalid observation data
-  if (length(width) < 5 || length(wse) < 5 || length(slope2) < 5) { return(vector(mode = "list")) }
+  if (length(width) < min_nobs || length(wse) < min_nobs || length(slope2) < min_nobs) { return(vector(mode = "list")) }
   else { return(list(width = width, wse = wse, slope2 = slope2, invalid_time = invalid_time)) }
 }
