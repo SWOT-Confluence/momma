@@ -91,23 +91,31 @@ run_momma <- function() {
   
   # Identify reach files to process
   args <- R.utils::commandArgs(trailingOnly = TRUE)
-  if (length(args)>=2){
-      index = strtoi(args[1]) + 1
-      reaches_json = file.path(input_dir, paste(args[2]))
-      min_nobs = as.integer(args[3])
+  if (length(args)>=3){
+    index = strtoi(args[1]) + 1
+    reaches_json = file.path(input_dir, paste(args[2]))
+    min_nobs = as.integer(args[3])
+  } else if (length(args>=2)) {
+    index = strtoi(args[1]) + 1
+    reaches_json = file.path(input_dir, 'reaches.json')
+    min_nobs = 3
   } else if (length(args)>=1) {
-      index = strtoi(args[1]) + 1
-      reaches_json = file.path(input_dir, 'reaches.json')
-      min_nobs = 3
+    index = strtoi(args[1]) + 1
+    reaches_json = file.path(input_dir, 'reaches.json')
+    min_nobs = 3
   } else{
-      index = strtoi(Sys.getenv("AWS_BATCH_JOB_ARRAY_INDEX")) + 1
-      reaches_json = file.path(input_dir, 'reaches.json')
-      min_nobs = 3
+    index = strtoi(Sys.getenv("AWS_BATCH_JOB_ARRAY_INDEX")) + 1
+    reaches_json = file.path(input_dir, 'reaches.json')
+    min_nobs = 3
   }
-  
+
+  print(paste("index: ", index))  
   print(paste("reaches_json: ", reaches_json))
+  print(paste("min_nobs: ", min_nobs))
+
   io_data <- get_reach_files(input_dir, reaches_json, index)
-  print(as.character(io_data$reach_id))
+  print(paste("reach_id: ", as.character(io_data$reach_id)))
+  
   # Get SWOT and SoS input data
   reach_data <- get_input_data(swot_file = io_data$swot_file,
                                sos_file = io_data$sos_file,
