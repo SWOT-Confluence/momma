@@ -43,8 +43,7 @@ RUN apt -y install \
 
 # STAGE 2 - Python and python packages for S3 functionality
 FROM stage1 as stage2
-RUN apt update && apt -y install python3-pip \
-	&& pip install boto3
+RUN apt update && apt -y install python3 python3-dev python3-pip python3-venv python3-boto3
 
 # STAGE 2 set up I/O directories, copy mommadata installer and R script, copy sos-read submodule
 FROM stage2 as stage3

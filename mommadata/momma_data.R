@@ -36,7 +36,7 @@ get_reach_files <- function(input_dir, reaches_json, index, bucket_key){
 
   return(list(reach_id = json_data$reach_id,
               swot_file = file.path(input_dir, "swot", json_data$swot),
-              sos_file = file.path(input_dir, "sos", sos_filepath)))
+              sos_file = sos_filepath))
 
 }
 
