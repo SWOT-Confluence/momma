@@ -32,8 +32,8 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
   # source("function.calibrate.Qmean.R")
   # library('hydroGOF')
   #-----------------------------------------
-
-
+  print('here is slope lenght')
+  print(length(stage))
   #--Global variables/settings------------------------------------
   min_nobs <- 3 # minimum number of observations required to entertain making flow calculations
   min_nobs_mean <- 1 # minimum number of observations required to coerce mean of estimated flows to match Qmean_prior

@@ -5,7 +5,7 @@ source("/app/mommadata/momma/function.find.rating.break.R")
 source("/app/mommadata/momma/function.find.zero.flow.stage.R")
 source("/app/mommadata/momma/function.constrain.momma.nb.x.R")
 source("/app/mommadata/momma/function.calibrate.Qmean.R")
-source("/app/mommadata/momma/function.MOMMA.confluence.swot.v3.2.R")
+source("/app/mommadata/momma/function.MOMMA.confluence.swot.v3.3.2.R")
 
 #' Identify reach and locate SWOT and SoS files.
 #'
@@ -13,9 +13,8 @@ source("/app/mommadata/momma/function.MOMMA.confluence.swot.v3.2.R")
 #' @param reaches_json name of json reach file
 #'
 #' @return list of swot file and sos file
-get_reach_files <- function(input_dir, reaches_json){
+get_reach_files <- function(input_dir, reaches_json, index){
   # Get reach identifier from array environment variable
-  index = strtoi(Sys.getenv("AWS_BATCH_JOB_ARRAY_INDEX")) + 1
   json_data <- rjson::fromJSON(file=reaches_json)[[index]]
   return(list(reach_id = json_data$reach_id,
               swot_file = file.path(input_dir, "swot", json_data$swot),
@@ -92,39 +91,56 @@ run_momma <- function() {
   
   # Identify reach files to process
   args <- R.utils::commandArgs(trailingOnly = TRUE)
-  # reach_file <- ifelse(is.null(args), "reaches.json", args[1])
-
-  
-
-  if (length(args)>=1){
-      reach_file = file.path(input_dir, paste('reaches_',strtoi(args[1]),'.json', sep = ""))
+  if (length(args)>=3){
+    index = strtoi(args[1]) + 1
+    reaches_json = file.path(input_dir, paste(args[2]))
+    min_nobs = as.integer(args[3])
+  } else if (length(args>=2)) {
+    index = strtoi(args[1]) + 1
+    reaches_json = file.path(input_dir, 'reaches.json')
+    min_nobs = 3
+  } else if (length(args)>=1) {
+    index = strtoi(args[1]) + 1
+    reaches_json = file.path(input_dir, 'reaches.json')
+    min_nobs = 3
   } else{
-      reach_file = file.path(input_dir, 'reaches.json')
+    index = strtoi(Sys.getenv("AWS_BATCH_JOB_ARRAY_INDEX")) + 1
+    reaches_json = file.path(input_dir, 'reaches.json')
+    min_nobs = 3
   }
 
-  print("reach")
-  print(reach_file)
-  io_data <- get_reach_files(input_dir, reach_file)
-  print(as.character(io_data$reach_id))
+  print(paste("index: ", index))  
+  print(paste("reaches_json: ", reaches_json))
+  print(paste("min_nobs: ", min_nobs))
+
+  io_data <- get_reach_files(input_dir, reaches_json, index)
+  print(paste("reach_id: ", as.character(io_data$reach_id)))
+  
   # Get SWOT and SoS input data
   reach_data <- get_input_data(swot_file = io_data$swot_file,
                                sos_file = io_data$sos_file,
-                               reach_id = io_data$reach_id)
+                               reach_id = io_data$reach_id,
+                               min_nobs = min_nobs)
   
   # Create empty placeholder list
   momma_results <- create_momma_list(length(reach_data$nt))
   
   # Run MOMMA on valid input reach data
   if (reach_data$valid == TRUE) {
+    print('running momma')
     momma_results <- momma(stage = reach_data$wse,
                            width = reach_data$width,
                            slope = reach_data$slope2,
                            Qb_prior = reach_data$Qb,
                            Qm_prior = reach_data$Qm,
                            Yb_prior = reach_data$db)
+  }else{
+    print('decided not to run')
   }
   
   # Write posteriors to netCDF
+  print('got results')
+  print(momma_results)
   write_netcdf(reach_data, momma_results, output_dir)
 }
 
