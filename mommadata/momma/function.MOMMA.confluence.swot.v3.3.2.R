@@ -118,6 +118,8 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
     pkg <- list(data = df, output = diag)
     return(pkg)
   }
+  # initialize cr object with an estimate
+  cr <- list(estimate = NA)
 
   #browser()
   # if stage and width are not constant, test correlation between them
