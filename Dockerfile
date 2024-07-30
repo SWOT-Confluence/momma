@@ -38,14 +38,20 @@ RUN apt -y install \
 	&& /usr/bin/Rscript -e "install.packages('hydroGOF', dependencies=TRUE, repos='http://cran.rstudio.com/')" \
 	&& /usr/bin/Rscript -e "install.packages('RNetCDF', dependencies=TRUE, repos='http://cran.rstudio.com/')" \
     && /usr/bin/Rscript -e "install.packages('R.utils', dependencies=TRUE, repos='http://cran.rstudio.com/')" \
-	&& /usr/bin/Rscript -e "install.packages('rjson', dependencies=TRUE, repos='http://cran.rstudio.com/')" 
+	&& /usr/bin/Rscript -e "install.packages('rjson', dependencies=TRUE, repos='http://cran.rstudio.com/')" \
+	&& /usr/bin/Rscript -e "install.packages('reticulate', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 
-# STAGE 2 set up I/O directories, copy geobamdata installer and R script
+# STAGE 2 - Python and python packages for S3 functionality
 FROM stage1 as stage2
+RUN apt update && apt -y install python3 python3-dev python3-pip python3-venv python3-boto3
+
+# STAGE 2 set up I/O directories, copy mommadata installer and R script, copy sos-read submodule
+FROM stage2 as stage3
 COPY ./mommadata/ /app/mommadata/
+COPY ./sos-read /app/sos-read/
 
 # STAGE 3 - Execute algorithm
-FROM stage2 as stage3
+FROM stage3 as stage4
 LABEL version="1.0" \
 	description="Containerized MOMMA algorithm." \
 	"confluence.contact"="ntebaldi@umass.edu" \
