@@ -11,6 +11,9 @@ source("/app/mommadata/momma/function.constrain.momma.nb.x.R")
 source("/app/mommadata/momma/function.calibrate.Qmean.R")
 source("/app/mommadata/momma/function.MOMMA.confluence.swot.v3.3.2.R")
 
+# example local deployment
+#sudo docker run -v /mnt/input/:/mnt/data/input -v /mnt/flpe/momma:/mnt/data/output -v ~/.aws:/root/.aws momma -r /mnt/data/input/reaches.json -m 3 -b confluence-sos/unconstrained/0000 -i 5
+
 PYTHON_EXE = "/usr/bin/python3"
 PYTHON_FILE = "/app/sos-read/sos_read.py"
 TMP_PATH = "/tmp"
@@ -32,12 +35,8 @@ get_reach_files <- function(input_dir, reaches_json, index, bucket_key){
   use_python(PYTHON_EXE)
   source_python(PYTHON_FILE)
 
-  if (bucket_key == 'local'){
-    sos_filepath = paste0('/mnt/data/input/sos/', json_data$sos)
-  }else{
-    sos_filepath = file.path(TMP_PATH, json_data$sos)
-    download_sos(bucket_key, sos_filepath)
-  }
+  sos_filepath = file.path(TMP_PATH, json_data$sos)
+  download_sos(bucket_key, sos_filepath)
 
    return(list(reach_id = json_data$reach_id,
               swot_file = file.path(input_dir, "swot", json_data$swot),
@@ -114,10 +113,11 @@ run_momma <- function() {
   output_dir <- file.path("/mnt", "data", "output")
 
   option_list <- list(
-    make_option(c("-i", "--index"), type = "integer", default = NULL, help = "Index to run on use -256 to use AWS evironment variable "),
-    make_option(c("-b", "--bucket_key"), type = "character", default = NULL, help = "Bucket key to find the sos, use local to run at mnt"),
+    make_option(c("-i", "--index"), type = "integer", default = NULL, help = "Index to run on"),
+    make_option(c("-b", "--bucket_key"), type = "character", default = NULL, help = "Bucket key to find the sos"),
     make_option(c("-r", "--reaches_json"), type = "character", default = NULL, help = "Name of reaches.json"),
-    make_option(c("-m", "--min_nobs"), type = "character", default = NULL, help = "Minimum number of observations for a reach to have to be considered valid")
+    make_option(c("-m", "--min_nobs"), type = "character", default = NULL, help = "Minimum number of observations for a reach to have to be considered valid"), 
+
   )
   opt_parser <- OptionParser(option_list = option_list)
   opts <- parse_args(opt_parser)
