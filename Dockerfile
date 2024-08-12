@@ -23,6 +23,7 @@ RUN echo "America/New_York" | tee /etc/timezone \
 
 # STAGE 1 - R and R packages
 FROM stage0 as stage1
+RUN apt-get update
 RUN apt -y install \
 		software-properties-common \
 		dirmngr \
@@ -39,6 +40,7 @@ RUN apt -y install \
 	&& /usr/bin/Rscript -e "install.packages('RNetCDF', dependencies=TRUE, repos='http://cran.rstudio.com/')" \
     && /usr/bin/Rscript -e "install.packages('R.utils', dependencies=TRUE, repos='http://cran.rstudio.com/')" \
 	&& /usr/bin/Rscript -e "install.packages('rjson', dependencies=TRUE, repos='http://cran.rstudio.com/')" \
+	&& /usr/bin/Rscript -e "install.packages('optparse', dependencies=TRUE, repos='http://cran.rstudio.com/')" \
 	&& /usr/bin/Rscript -e "install.packages('reticulate', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 
 # STAGE 2 - Python and python packages for S3 functionality
