@@ -63,6 +63,8 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
   if (is.na(Qgage[1]) & length(Qgage) == 1){# if there are no in situ gage data
     df <- data.frame(stage, width, slope)
     df$Qgage <- NA
+    print(df)
+    print("here is the df for unconstrained")
   }else{
     df <- data.frame(stage, width, slope, Qgage)
   }

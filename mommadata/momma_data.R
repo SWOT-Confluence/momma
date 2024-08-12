@@ -117,7 +117,7 @@ run_momma <- function() {
     make_option(c("-b", "--bucket_key"), type = "character", default = NULL, help = "Bucket key to find the sos"),
     make_option(c("-r", "--reaches_json"), type = "character", default = NULL, help = "Name of reaches.json"),
     make_option(c("-m", "--min_nobs"), type = "character", default = NULL, help = "Minimum number of observations for a reach to have to be considered valid"), 
-    make_option(c("-c", "--constrained"), action = "store_true", default = FALSE, help = "Indicate constrained run"), 
+    make_option(c("-c", "--constrained"), action = "store_true", default = FALSE, help = "Indicate constrained run")
 
   )
 
@@ -141,7 +141,8 @@ run_momma <- function() {
   reach_data <- get_input_data(swot_file = io_data$swot_file,
                                sos_file = io_data$sos_file,
                                reach_id = io_data$reach_id,
-                               min_nobs = min_nobs)
+                               min_nobs = min_nobs,
+                               constrained = constrained)
 
   # Create empty placeholder list
   momma_results <- create_momma_list(length(reach_data$nt))
@@ -155,7 +156,7 @@ run_momma <- function() {
                            Qb_prior = reach_data$Qb,
                            Qm_prior = reach_data$Qm,
                            Yb_prior = reach_data$db,
-                           constrain = constrained)
+                           Qgage = Qgage)
   }else{
     print('decided not to run')
   }
