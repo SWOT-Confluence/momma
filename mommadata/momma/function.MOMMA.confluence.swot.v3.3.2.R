@@ -1,6 +1,6 @@
 # Modified Optimized Manning Method Algorithm (MOMMA)
 # Authors: RWDudley, DMBjerklie
-# v3.3.1 November 2023
+# v3.3.3 August 2024
 # MOMMA configured for CONFLUENCE application
 # Uses input data (SWOT observations)
 #   observed stages (stage, vector)
@@ -423,7 +423,10 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
                Qmean_momma = signif(mean(df$Q), 3),
                Qmean_momma.constrained = signif(mean(df$Q.constrained), 3),
                width_stage_corr = cr$estimate)
-
+  # copy q.constrain to q if constrain
+  if (constrain){
+    df$Q <- df$Q.constrained
+  }
   # attach flow computations and diagnostics and return the package
   pkg <- list(data = df, output = diag)
 

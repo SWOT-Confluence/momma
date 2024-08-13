@@ -146,7 +146,6 @@ run_momma <- function() {
 
   # Create empty placeholder list
   momma_results <- create_momma_list(length(reach_data$nt))
-  print(momma_results)
   # Run MOMMA on valid input reach data
   if (reach_data$valid == TRUE) {
     print('running momma')
@@ -162,8 +161,6 @@ run_momma <- function() {
   }
 
   # Write posteriors to netCDF
-  print('got results')
-  print(momma_results)
   write_netcdf(reach_data, momma_results, output_dir)
 }
 
