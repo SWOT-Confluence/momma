@@ -47,7 +47,7 @@ constrain.momma.nb.x <- function(flows, elevations, widths, slopes, zeroQ.stage,
     colnames(eval.df) <- c("nrmse", "pbias", "NSE", "nb", "x", "color")
 
     for (i in 1:length(df[, 1, 1])){
-      eval.df[i,1] <- ((sum(df[i, 7, ]) / nobs - 1) ^ 0.5) / mean(flows) * 100 # RMSE = sum of the squared residuals
+      eval.df[i,1] <- ((sum(df[i, 7, ]) / (nobs - 1)) ^ 0.5) / mean(flows) * 100 # RMSE = sum of the squared residuals
       # divide by n-1, and take the square root; normalized to the mean so divide by the mean x 100% for percent
       # https://www.marinedatascience.co/blog/2019/01/07/normalizing-the-rmse/
       eval.df[i,2] <- (sum(df[i, 6, ]) / sum(flows)) * 100 # percent bias = 100 * [sum(residuals) / sum(obs) ]

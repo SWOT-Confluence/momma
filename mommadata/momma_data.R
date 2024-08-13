@@ -146,7 +146,7 @@ run_momma <- function() {
 
   # Create empty placeholder list
   momma_results <- create_momma_list(length(reach_data$nt))
-
+  print(momma_results)
   # Run MOMMA on valid input reach data
   if (reach_data$valid == TRUE) {
     print('running momma')
@@ -156,7 +156,7 @@ run_momma <- function() {
                            Qb_prior = reach_data$Qb,
                            Qm_prior = reach_data$Qm,
                            Yb_prior = reach_data$db,
-                           Qgage = Qgage)
+                           Qgage = reach_data$Qgage)
   }else{
     print('decided not to run')
   }
