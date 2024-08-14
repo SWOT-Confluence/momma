@@ -129,7 +129,8 @@ run_momma <- function() {
   reaches_json <- opts$reaches_json
   min_nobs <- opts$min_nobs
   constrained <- opts$constrained
-
+  
+  print(paste("bucket_key: ", bucket_key))
   print(paste("index: ", index))
   print(paste("reaches_json: ", reaches_json))
   print(paste("min_nobs: ", min_nobs))
