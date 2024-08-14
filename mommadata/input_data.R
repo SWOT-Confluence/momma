@@ -7,8 +7,9 @@
 #' @param reach_id integer unique reach identifier
 #'
 #' @return list matrix of reach data (both valid and invalid)
-get_input_data <- function(swot_file, sos_file, reach_id, min_nobs) {
-  print(min_nobs)
+get_input_data <- function(swot_file, sos_file, reach_id, min_nobs, constrained) {
+
+  Qgage <- NA
 
   # Open files for reading and get data
   swot_input <- RNetCDF::open.nc(swot_file)
@@ -19,6 +20,8 @@ get_input_data <- function(swot_file, sos_file, reach_id, min_nobs) {
 
   # Data
   reach_grp = RNetCDF::grp.inq.nc(swot_input, "reach")$self
+
+  obs_times <- RNetCDF::var.get.nc(reach_grp, "time_str")
   width <- RNetCDF::var.get.nc(reach_grp, "width")
   wse <- RNetCDF::var.get.nc(reach_grp, "wse")
   slope2 <- RNetCDF::var.get.nc(reach_grp, "slope2")
@@ -34,22 +37,76 @@ get_input_data <- function(swot_file, sos_file, reach_id, min_nobs) {
   Qb <- RNetCDF::var.get.nc(model_grp, "two_year_return_q")[index]
 
   # Gauges
-  # need an argument tht acalls it constrained or unconstrained
-  # then finds what continent and what river has that gauge and then pull the times for that gauge obs
+  if (constrained){
 
-  gauge_grp <- RNetCDF::grp.inq.nc(sos_input, "reaches")$self
+  
+#   # Find out what gauge groups there are with the top level sos variable
+#   gauge_groups = get variable in sos 
+    all_gauge_groups = RNetCDF::att.get.nc(sos_input, "NC_GLOBAL", "Gage_Agency")
+    all_gauge_groups = strsplit(all_gauge_groups, ";")[[1]]
 
-  print(index)
-  print("-----index----")
+    
+    for (gauge_group in all_gauge_groups){
+      gauge_grp <- RNetCDF::grp.inq.nc(sos_input, gauge_group)$self
+      reach_group_name = paste0(gauge_group, "_reach_id")
+      reach_ids_in_group = RNetCDF::var.get.nc(gauge_grp, reach_group_name)
+      
+      gauge_index = which(reach_ids_in_group==reach_id, arr.ind=TRUE)
+      if (length(gauge_index)!=0){
+        break
+      }
+    }
 
+    if (length(gauge_index)!=0){
+      gauge_times = RNetCDF::var.get.nc(gauge_grp, paste0(gauge_group, "_qt"))[,gauge_index]
+
+      find_index <- function(x) {
+      index <- which(gauge_times == x)
+      if (length(index) == 0) {
+        return(NA)  # Return NA if not found
+      } else {
+        return(index)  # Return the index if found
+      }
+    }
+
+    # Function to convert a date string to days since 2000-01-01
+    date_to_days <- function(date_str) {
+      # Convert the input string to a Date object
+      date_obj <- as.Date(date_str, format = "%Y-%m-%d")
+      
+      # Reference date: 2000-01-01
+      reference_date <- as.Date("0001-01-01")
+      
+      # Calculate the difference in days
+      days_since_2000 <- as.numeric(difftime(date_obj, reference_date, units = "days"))
+      
+      return(days_since_2000)
+    }
+
+
+    # Example usage
+    date_str <- obs_times[1]
+    days_since_year_1 <- date_to_days(date_str)
+
+    # # Apply the function to each element of the list
+    result_list <- lapply(obs_times, date_to_days)
+
+    # Apply the function to each element in obs_times
+    indices <- sapply(result_list, find_index)
+
+    Qgage <- RNetCDF::var.get.nc(gauge_grp, paste0(gauge_group, "_q"))[,gauge_index][indices]
+    }
+  }
+
+# 
+  # at this point Qgage should be the daily gauge mesaurments for the reach and have the same dimensions as the observations
+  
   # Close files
   RNetCDF::close.nc(swot_input)
   RNetCDF::close.nc(sos_input)
 
   # Check validity of observation data
-  obs_data <- check_observations(width, wse, slope2, dim(nt), min_nobs)
-  print('here are obs_data')
-  print(obs_data)
+  obs_data <- check_observations(width, wse, slope2, dim(nt), min_nobs, Qgage)
   if (length(obs_data) == 0) { return(list(valid = FALSE, reach_id = reach_id, nt = nt)) }
 
   # Create a list of data with reach identifier
@@ -59,7 +116,7 @@ get_input_data <- function(swot_file, sos_file, reach_id, min_nobs) {
               wse = obs_data$wse, db = db,
               mbl = 16800, Qb = Qb, Qm = Qm,
               invalid_time = obs_data$invalid_time))
-}
+  }
 
 #' Checks if observation data is valid.
 #'
@@ -69,26 +126,16 @@ get_input_data <- function(swot_file, sos_file, reach_id, min_nobs) {
 #' @param nt integer
 #'
 #' @return list of valid observations or an empty list if there are none
-check_observations <- function(width, wse, slope2, nt, min_nobs) {
-  print('obs')
-  print(width)
-  print(wse)
-  print(slope2)
-  print(nt)
+check_observations <- function(width, wse, slope2, nt, min_nobs, Qgage) {
   # Test for negative data
   width[width < 0] <- NA
   slope2[slope2 < 0] <- NA
-  print('after')
-  print(width)
-  print(slope2)
 
   # Track invalid time
   invalid_width <- which(is.na(width))
   invalid_wse <- which(is.na(wse))
   invalid_slope2 <- which(is.na(slope2))
   invalid_time <- sort(unique(c(invalid_width, invalid_wse, invalid_slope2)))
-  print('time')
-  print(invalid_time)
 
   # Keep valid data from width, wse, and slope2
   valid_time <- !c(1:nt) %in% invalid_time
@@ -96,8 +143,12 @@ check_observations <- function(width, wse, slope2, nt, min_nobs) {
   width <- width[valid_time]
   wse <- wse[valid_time]
   slope2 <- slope2[valid_time]
+  Qgage <- Qgage[valid_time]
 
   # Return a list of valid or invalid observation data
-  if (length(width) < min_nobs || length(wse) < min_nobs || length(slope2) < min_nobs) { return(vector(mode = "list")) }
-  else { return(list(width = width, wse = wse, slope2 = slope2, invalid_time = invalid_time)) }
+  if (length(width) < min_nobs || length(wse) < min_nobs || length(slope2) < min_nobs) { 
+    return(vector(mode = "list"))
+  }  else { 
+    return(list(width = width, wse = wse, slope2 = slope2, invalid_time = invalid_time, Qgage = Qgage)) 
+  }
 }

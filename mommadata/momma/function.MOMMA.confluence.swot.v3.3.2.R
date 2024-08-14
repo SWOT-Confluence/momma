@@ -1,6 +1,6 @@
 # Modified Optimized Manning Method Algorithm (MOMMA)
 # Authors: RWDudley, DMBjerklie
-# v3.3.1 November 2023
+# v3.3.3 August 2024
 # MOMMA configured for CONFLUENCE application
 # Uses input data (SWOT observations)
 #   observed stages (stage, vector)
@@ -32,8 +32,6 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
   # source("function.calibrate.Qmean.R")
   # library('hydroGOF')
   #-----------------------------------------
-  print('here is slope lenght')
-  print(length(stage))
   #--Global variables/settings------------------------------------
   min_nobs <- 3 # minimum number of observations required to entertain making flow calculations
   min_nobs_mean <- 1 # minimum number of observations required to coerce mean of estimated flows to match Qmean_prior
@@ -60,12 +58,13 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
   #---------------------------------------------------
 
   # Form the dataframe, df
-  if (is.na(Qgage[1]) & length(Qgage) == 1){# if there are no in situ gage data
-    df <- data.frame(stage, width, slope)
-    df$Qgage <- NA
-  }else{
-    df <- data.frame(stage, width, slope, Qgage)
-  }
+  if (length(Qgage) == 0){
+    
+      df <- data.frame(stage, width, slope)
+      df$Qgage <- NA
+    }else{
+      df <- data.frame(stage, width, slope, Qgage)
+    }
 
   # omit NA cases among obs
   df <- df[which(!is.na(df$stage)),]
@@ -122,6 +121,8 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
   cr <- list(estimate = NA)
 
   #browser()
+
+
   # if stage and width are not constant, test correlation between them
   if (sd(df$stage) != 0 & sd(df$width) != 0){
     # check that stage and width are positively correlated
@@ -422,7 +423,10 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
                Qmean_momma = signif(mean(df$Q), 3),
                Qmean_momma.constrained = signif(mean(df$Q.constrained), 3),
                width_stage_corr = cr$estimate)
-
+  # copy q.constrain to q if constrain
+  if (constrain){
+    df$Q <- df$Q.constrained
+  }
   # attach flow computations and diagnostics and return the package
   pkg <- list(data = df, output = diag)
 

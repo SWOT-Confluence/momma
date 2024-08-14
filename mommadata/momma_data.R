@@ -117,8 +117,10 @@ run_momma <- function() {
     make_option(c("-b", "--bucket_key"), type = "character", default = NULL, help = "Bucket key to find the sos"),
     make_option(c("-r", "--reaches_json"), type = "character", default = NULL, help = "Name of reaches.json"),
     make_option(c("-m", "--min_nobs"), type = "character", default = NULL, help = "Minimum number of observations for a reach to have to be considered valid"), 
+    make_option(c("-c", "--constrained"), action = "store_true", default = FALSE, help = "Indicate constrained run")
 
   )
+
   opt_parser <- OptionParser(option_list = option_list)
   opts <- parse_args(opt_parser)
   
@@ -126,37 +128,8 @@ run_momma <- function() {
   index <- opts$index
   reaches_json <- opts$reaches_json
   min_nobs <- opts$min_nobs
-  
-# 
-#   args <- R.utils::commandArgs(trailingOnly = TRUE)
-#   if (length(args)>=4) {
-#     bucket_key = args[1]
-#     index = strtoi(args[2]) + 1j
-#     reaches_json = file.path(input_dir, paste(args[3]))
-#     min_nobs = as.integer(args[4])
-#   } else if (length(args)>=3) {
-#     bucket_key = args[1]
-#     index = strtoi(args[2]) + 1
-#     reaches_json = file.path(input_dir, paste(args[3]))
-#     min_nobs = 3
-#   } else if (length(args)>=2) {
-#     bucket_key = args[1]
-#     index = strtoi(args[2]) + 1
-#     reaches_json = file.path(input_dir, 'reaches.json')
-#     min_nobs = 3
-#   } else if (length(args)>=1) {
-#     bucket_key = args[1]
-#     index = strtoi(Sys.getenv("AWS_BATCH_JOB_ARRAY_INDEX")) + 1
-#     reaches_json = file.path(input_dir, 'reaches.json')
-#     min_nobs = 3
-#   } else {
-#     bucket_key = "confluence-dev1-sos/unconstrained/0000"
-#     index = strtoi(Sys.getenv("AWS_BATCH_JOB_ARRAY_INDEX")) + 1
-#     reaches_json = file.path(input_dir, 'reaches.json')
-#     min_nobs = 3
-#   }
-# 
-#   print(paste("bucket_key: ", bucket_key))
+  constrained <- opts$constrained
+
   print(paste("index: ", index))
   print(paste("reaches_json: ", reaches_json))
   print(paste("min_nobs: ", min_nobs))
@@ -168,11 +141,11 @@ run_momma <- function() {
   reach_data <- get_input_data(swot_file = io_data$swot_file,
                                sos_file = io_data$sos_file,
                                reach_id = io_data$reach_id,
-                               min_nobs = min_nobs)
+                               min_nobs = min_nobs,
+                               constrained = constrained)
 
   # Create empty placeholder list
   momma_results <- create_momma_list(length(reach_data$nt))
-
   # Run MOMMA on valid input reach data
   if (reach_data$valid == TRUE) {
     print('running momma')
@@ -181,14 +154,13 @@ run_momma <- function() {
                            slope = reach_data$slope2,
                            Qb_prior = reach_data$Qb,
                            Qm_prior = reach_data$Qm,
-                           Yb_prior = reach_data$db)
+                           Yb_prior = reach_data$db,
+                           Qgage = reach_data$Qgage)
   }else{
     print('decided not to run')
   }
 
   # Write posteriors to netCDF
-  print('got results')
-  print(momma_results)
   write_netcdf(reach_data, momma_results, output_dir)
 }
 

@@ -98,7 +98,6 @@ write_data <- function(nc_out, momma_list) {
 
   # Output variables
   RNetCDF::var.def.nc(nc_out, "gage_constrained", "NC_DOUBLE", NA)
-  print(nc_out["gage_constrained"])
 
   RNetCDF::att.put.nc(nc_out, "gage_constrained", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "gage_constrained", as.numeric(momma_list$output$gage_constrained))
