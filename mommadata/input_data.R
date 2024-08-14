@@ -107,7 +107,7 @@ get_input_data <- function(swot_file, sos_file, reach_id, min_nobs, constrained)
 
   # Check validity of observation data
   obs_data <- check_observations(width, wse, slope2, dim(nt), min_nobs, Qgage)
-  if (length(obs_data) == 0) { return(list(valid = FALSE, reach_id = reach_id, nt = nt)) }
+  if (length(obs_data) == 0) { return(list(valid = FALSE, reach_id = reach_id, nt = nt, obs_times=obs_times)) }
 
   # Create a list of data with reach identifier
   ## TODO mbl, Qb, Qmean_prior -> use real data
@@ -115,7 +115,7 @@ get_input_data <- function(swot_file, sos_file, reach_id, min_nobs, constrained)
               width = obs_data$width, slope2 = obs_data$slope2,
               wse = obs_data$wse, db = db,
               mbl = 16800, Qb = Qb, Qm = Qm,
-              invalid_time = obs_data$invalid_time))
+              invalid_time = obs_data$invalid_time, obs_times=obs_times))
   }
 
 #' Checks if observation data is valid.

@@ -28,12 +28,18 @@ write_netcdf <- function(reach_data, momma_list, output_dir) {
   if (reach_data$valid == TRUE) valid = 1 else valid = 0
   RNetCDF::att.put.nc(nc_out, "NC_GLOBAL", "valid", "NC_INT", valid)
   RNetCDF::att.put.nc(nc_out, "NC_GLOBAL", "reach_id", "NC_INT64", reach_data$reach_id)
-
+  # RNetCDF::att.put.nc(nc_out, "NC_GLOBAL", "time_str", "NC_STRING", reach_data$obs_times)
   # Dimensions
   RNetCDF::dim.def.nc(nc_out, "nt", length(reach_data$nt))
   RNetCDF::var.def.nc(nc_out, "nt", "NC_INT", "nt")
   RNetCDF::att.put.nc(nc_out, "nt", "units", "NC_STRING", "time")
   RNetCDF::var.put.nc(nc_out, "nt", reach_data$nt)
+
+  RNetCDF::var.def.nc(nc_out, "time_str", "NC_STRING", "nt")
+  RNetCDF::att.put.nc(nc_out, "time_str", "units", "NC_STRING", "time")
+  RNetCDF::var.put.nc(nc_out, "time_str", reach_data$obs_times)
+
+
 
   # Write data
   write_data(nc_out, momma_list)
