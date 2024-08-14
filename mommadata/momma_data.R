@@ -15,7 +15,7 @@ source("/app/mommadata/momma/function.MOMMA.confluence.swot.v3.3.2.R")
 #sudo docker run -v /mnt/input/:/mnt/data/input -v /mnt/flpe/momma:/mnt/data/output -v ~/.aws:/root/.aws momma -r /mnt/data/input/reaches.json -m 3 -b confluence-sos/unconstrained/0000 -i 5
 
 PYTHON_EXE = "/usr/bin/python3"
-PYTHON_FILE = "/app/sos-read/sos_read.py"
+PYTHON_FILE = "/app/sos_read/sos_read.py"
 TMP_PATH = "/tmp"
 
 #' Identify reach and locate SWOT and SoS files.

@@ -47,10 +47,10 @@ RUN apt -y install \
 FROM stage1 as stage2
 RUN apt update && apt -y install python3 python3-dev python3-pip python3-venv python3-boto3
 
-# STAGE 2 set up I/O directories, copy mommadata installer and R script, copy sos-read submodule
+# STAGE 2 set up I/O directories, copy mommadata installer and R script, copy sos_read submodule
 FROM stage2 as stage3
 COPY ./mommadata/ /app/mommadata/
-COPY ./sos-read /app/sos-read/
+COPY ./sos_read /app/sos_read/
 
 # STAGE 3 - Execute algorithm
 FROM stage3 as stage4
