@@ -125,7 +125,7 @@ run_momma <- function() {
   opts <- parse_args(opt_parser)
   
   bucket_key <- opts$bucket_key
-  index <- opts$index
+  index <- opts$index + 1    # Add 1 to AWS 0-based index
   reaches_json <- opts$reaches_json
   min_nobs <- opts$min_nobs
   constrained <- opts$constrained
@@ -133,6 +133,7 @@ run_momma <- function() {
   print(paste("index: ", index))
   print(paste("reaches_json: ", reaches_json))
   print(paste("min_nobs: ", min_nobs))
+  print(paste("constrained: ", constrained))
 
   io_data <- get_reach_files(input_dir, reaches_json, index, bucket_key)
   print(paste("reach_id: ", as.character(io_data$reach_id)))
