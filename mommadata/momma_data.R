@@ -1,5 +1,6 @@
 # Imports
 library(reticulate)
+library(optparse)
 
 # Local
 source("/app/mommadata/input_data.R")
@@ -9,6 +10,9 @@ source("/app/mommadata/momma/function.find.zero.flow.stage.R")
 source("/app/mommadata/momma/function.constrain.momma.nb.x.R")
 source("/app/mommadata/momma/function.calibrate.Qmean.R")
 source("/app/mommadata/momma/function.MOMMA.confluence.swot.v3.3.2.R")
+
+# example local deployment
+#sudo docker run -v /mnt/input/:/mnt/data/input -v /mnt/flpe/momma:/mnt/data/output -v ~/.aws:/root/.aws momma -r /mnt/data/input/reaches.json -m 3 -b confluence-sos/unconstrained/0000 -i 5
 
 PYTHON_EXE = "/usr/bin/python3"
 PYTHON_FILE = "/app/sos-read/sos_read.py"
@@ -34,7 +38,7 @@ get_reach_files <- function(input_dir, reaches_json, index, bucket_key){
   sos_filepath = file.path(TMP_PATH, json_data$sos)
   download_sos(bucket_key, sos_filepath)
 
-  return(list(reach_id = json_data$reach_id,
+   return(list(reach_id = json_data$reach_id,
               swot_file = file.path(input_dir, "swot", json_data$swot),
               sos_file = sos_filepath))
 
@@ -108,36 +112,51 @@ run_momma <- function() {
   input_dir <- file.path("/mnt", "data", "input")
   output_dir <- file.path("/mnt", "data", "output")
 
-  # Identify reach files to process
-  args <- R.utils::commandArgs(trailingOnly = TRUE)
-  if (length(args)>=4) {
-    bucket_key = args[1]
-    index = strtoi(args[2]) + 1
-    reaches_json = file.path(input_dir, paste(args[3]))
-    min_nobs = as.integer(args[4])
-  } else if (length(args)>=3) {
-    bucket_key = args[1]
-    index = strtoi(args[2]) + 1
-    reaches_json = file.path(input_dir, paste(args[3]))
-    min_nobs = 3
-  } else if (length(args)>=2) {
-    bucket_key = args[1]
-    index = strtoi(args[2]) + 1
-    reaches_json = file.path(input_dir, 'reaches.json')
-    min_nobs = 3
-  } else if (length(args)>=1) {
-    bucket_key = args[1]
-    index = strtoi(Sys.getenv("AWS_BATCH_JOB_ARRAY_INDEX")) + 1
-    reaches_json = file.path(input_dir, 'reaches.json')
-    min_nobs = 3
-  } else {
-    bucket_key = "confluence-dev1-sos/unconstrained/0000"
-    index = strtoi(Sys.getenv("AWS_BATCH_JOB_ARRAY_INDEX")) + 1
-    reaches_json = file.path(input_dir, 'reaches.json')
-    min_nobs = 3
-  }
+  option_list <- list(
+    make_option(c("-i", "--index"), type = "integer", default = NULL, help = "Index to run on"),
+    make_option(c("-b", "--bucket_key"), type = "character", default = NULL, help = "Bucket key to find the sos"),
+    make_option(c("-r", "--reaches_json"), type = "character", default = NULL, help = "Name of reaches.json"),
+    make_option(c("-m", "--min_nobs"), type = "character", default = NULL, help = "Minimum number of observations for a reach to have to be considered valid"), 
 
-  print(paste("bucket_key: ", bucket_key))
+  )
+  opt_parser <- OptionParser(option_list = option_list)
+  opts <- parse_args(opt_parser)
+  
+  bucket_key <- opts$bucket_key
+  index <- opts$index
+  reaches_json <- opts$reaches_json
+  min_nobs <- opts$min_nobs
+  
+# 
+#   args <- R.utils::commandArgs(trailingOnly = TRUE)
+#   if (length(args)>=4) {
+#     bucket_key = args[1]
+#     index = strtoi(args[2]) + 1j
+#     reaches_json = file.path(input_dir, paste(args[3]))
+#     min_nobs = as.integer(args[4])
+#   } else if (length(args)>=3) {
+#     bucket_key = args[1]
+#     index = strtoi(args[2]) + 1
+#     reaches_json = file.path(input_dir, paste(args[3]))
+#     min_nobs = 3
+#   } else if (length(args)>=2) {
+#     bucket_key = args[1]
+#     index = strtoi(args[2]) + 1
+#     reaches_json = file.path(input_dir, 'reaches.json')
+#     min_nobs = 3
+#   } else if (length(args)>=1) {
+#     bucket_key = args[1]
+#     index = strtoi(Sys.getenv("AWS_BATCH_JOB_ARRAY_INDEX")) + 1
+#     reaches_json = file.path(input_dir, 'reaches.json')
+#     min_nobs = 3
+#   } else {
+#     bucket_key = "confluence-dev1-sos/unconstrained/0000"
+#     index = strtoi(Sys.getenv("AWS_BATCH_JOB_ARRAY_INDEX")) + 1
+#     reaches_json = file.path(input_dir, 'reaches.json')
+#     min_nobs = 3
+#   }
+# 
+#   print(paste("bucket_key: ", bucket_key))
   print(paste("index: ", index))
   print(paste("reaches_json: ", reaches_json))
   print(paste("min_nobs: ", min_nobs))
