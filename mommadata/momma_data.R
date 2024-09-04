@@ -29,7 +29,7 @@ TMP_PATH = "/tmp"
 get_reach_files <- function(input_dir, reaches_json, index, bucket_key){
 
   # Get reach data from index
-  json_data <- rjson::fromJSON(file=file.path(IN_DIR, reaches_json))[[index]]
+  json_data <- rjson::fromJSON(file=file.path(input_dir, reaches_json))[[index]]
 
   if (bucket_key != "") {
     # Download the SoS file and reference the file path
@@ -39,12 +39,12 @@ get_reach_files <- function(input_dir, reaches_json, index, bucket_key){
     sos_filepath <- file.path(TMP_PATH, json_data$sos)
     download_sos(bucket_key, sos_filepath)
     reach_list <- list(reach_id = json_data$reach_id,
-                      swot_file = file.path(IN_DIR, "swot", json_data$swot),
+                      swot_file = file.path(input_dir, "swot", json_data$swot),
                       sos_file = sos_filepath)
   } else {
     reach_list <- list(reach_id = json_data$reach_id,
-                      swot_file = file.path(IN_DIR, "swot", json_data$swot),
-                      sos_file = file.path(IN_DIR, "sos", json_data$sos))
+                      swot_file = file.path(input_dir, "swot", json_data$swot),
+                      sos_file = file.path(input_dir, "sos", json_data$sos))
   }
 
   return(reach_list)
@@ -120,7 +120,7 @@ run_momma <- function() {
   output_dir <- file.path("/mnt", "data", "output")
 
   option_list <- list(
-    make_option(c("-i", "--index"), type = "integer", default = NULL, help = "Index to run on"),
+    make_option(c("-i", "--index"), type = "integer", default = -256, help = "Index to run on"),
     make_option(c("-b", "--bucket_key"), type = "character", default = "", help = "Bucket key to find the sos"),
     make_option(c("-r", "--reaches_json"), type = "character", default = NULL, help = "Name of reaches.json"),
     make_option(c("-m", "--min_nobs"), type = "character", default = NULL, help = "Minimum number of observations for a reach to have to be considered valid"),
@@ -131,10 +131,21 @@ run_momma <- function() {
   opt_parser <- OptionParser(option_list = option_list)
   opts <- parse_args(opt_parser)
   bucket_key <- opts$bucket_key
-  index <- opts$index + 1    # Add 1 to AWS 0-based index
   reaches_json <- opts$reaches_json
   min_nobs <- opts$min_nobs
   constrained <- opts$constrained
+
+  # Parse index
+  index <- opts$index
+
+  # Check if we are running via env variable...
+  if (index == -256){
+    index <- strtoi(Sys.getenv("AWS_BATCH_JOB_ARRAY_INDEX"))
+  }
+
+  index <- index + 1    # Add 1 to AWS 0-based index
+
+
   print(paste("bucket_key: ", bucket_key))
   print(paste("index: ", index))
   print(paste("reaches_json: ", reaches_json))
