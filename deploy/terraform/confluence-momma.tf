@@ -15,8 +15,8 @@ resource "aws_batch_job_definition" "generate_batch_jd_momma" {
       }
     },
     "resourceRequirements": [
-      {"type": "MEMORY", "value": "512"},
-      {"type": "VCPU", "value": "0.25"}
+      {"type": "MEMORY", "value": "2048"},
+      {"type": "VCPU", "value": "1"}
     ],
     "mountPoints": [
       {
