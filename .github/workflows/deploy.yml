@@ -56,6 +56,8 @@ jobs:
 
       # Check out GitHub repo
       - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
 
       # SNYK IAC scan and report - TODO
       # - name: Run Snyk IAC to test and report
