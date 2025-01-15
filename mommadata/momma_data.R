@@ -125,14 +125,13 @@ run_momma <- function() {
     make_option(c("-r", "--reaches_json"), type = "character", default = NULL, help = "Name of reaches.json"),
     make_option(c("-m", "--min_nobs"), type = "character", default = NULL, help = "Minimum number of observations for a reach to have to be considered valid"),
     make_option(c("-c", "--constrained"), action = "store_true", default = FALSE, help = "Indicate constrained run")
-
   )
 
   opt_parser <- OptionParser(option_list = option_list)
   opts <- parse_args(opt_parser)
   bucket_key <- opts$bucket_key
   reaches_json <- opts$reaches_json
-  min_nobs <- opts$min_nobs
+  min_nobs <- as.numeric(opts$min_nobs)
   constrained <- opts$constrained
 
   # Parse index
