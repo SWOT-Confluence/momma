@@ -42,7 +42,7 @@ get_input_data <- function(swot_file, sos_file, reach_id, min_nobs, constrained)
   
 #   # Find out what gauge groups there are with the top level sos variable
 #   gauge_groups = get variable in sos 
-    all_gauge_groups = RNetCDF::att.get.nc(sos_input, "NC_GLOBAL", "Gage_Agency")
+    all_gauge_groups = RNetCDF::att.get.nc(sos_input, "NC_GLOBAL", "gauge_agency")
     all_gauge_groups = strsplit(all_gauge_groups, ";")[[1]]
 
     
