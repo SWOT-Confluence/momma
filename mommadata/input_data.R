@@ -44,8 +44,8 @@ get_input_data <- function(swot_file, sos_file, reach_id, min_nobs, constrained)
 #   gauge_groups = get variable in sos 
     all_gauge_groups = RNetCDF::att.get.nc(sos_input, "NC_GLOBAL", "gauge_agency")
     all_gauge_groups = strsplit(all_gauge_groups, ";")[[1]]
+    all_gauge_groups = all_gauge_groups[all_gauge_groups != "SWOT_SHAQ"]
 
-    
     for (gauge_group in all_gauge_groups){
       gauge_grp <- RNetCDF::grp.inq.nc(sos_input, gauge_group)$self
       reach_group_name = paste0(gauge_group, "_reach_id")
