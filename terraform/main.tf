@@ -50,11 +50,11 @@ module "confluence-momma" {
   app_version = var.app_version
   aws_region = var.aws_region
   efs_file_system_ids = {
-    input = data.aws_efs_file_system.aws_efs_input.file_system_id
+    input = data.aws_efs_file_system.input.file_system_id
     flpe = data.aws_efs_file_system.flpe.file_system_id
   }
   environment = var.environment
-  iam_execution_role_arn = data.aws_iam_role.exec.arn
+  iam_execution_role_arn = data.aws_iam_role.execution.arn
   iam_job_role_arn = data.aws_iam_role.job.arn
   prefix = var.prefix
 }
