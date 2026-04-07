@@ -174,7 +174,8 @@ run_momma <- function() {
                            Qb_prior = reach_data$Qb,
                            Qm_prior = reach_data$Qm,
                            Yb_prior = reach_data$db,
-                           Qgage = reach_data$Qgage)
+                           Qgage = reach_data$Qgage,
+                           constrained = constrained)
   }else{
     print('decided not to run')
   }

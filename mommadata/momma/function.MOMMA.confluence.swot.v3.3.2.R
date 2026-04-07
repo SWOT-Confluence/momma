@@ -23,7 +23,7 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
                   Yb_prior = NA, known_ezf = NA, known_bkfl_stage = NA,
                   known_nb_seg1 = NA, known_x_seg1 = NA,
                   known_nb_seg2 = NA, known_x_seg2 = NA,
-                  constrain = FALSE){
+                  constrained = FALSE){
   #browser()
   #--Functions called-----------------------
   # source("function.find.rating.break.R")
@@ -80,7 +80,7 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
   df$Q.constrained <- NA
 
   # initialize the function return package
-  diag <- list(gage_constrained = constrain,
+  diag <- list(gage_constrained = constrained,
                input_Qm_prior = Qm_prior,
                input_Qb_prior = Qb_prior,
                input_Yb_prior = Yb_prior,
@@ -179,7 +179,7 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
       seg2 <- df[which((df$stage >= bkfl_stage) & (df$stage <= stage.max)),]
       if (nrow(seg1) < n.min.seg | nrow(seg2) < n.min.seg |
           (bkfl_stage - stage.min) < stage.range.min.seg |
-          (stage.max - bkfl_stage) < stage.range.min.seg){
+          (stage.max - bkfl_stage) < stage.range.min.seg) {
         bkfl_stage <- stage.max
       }else{
         # label the above-bankfull segment '2' if a satisfactory bankfull
@@ -214,7 +214,7 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
     zero.stage.floor <- bkfl_stage - Yb_upper95 / b
 
     if (sd(df$width) == 0){ # special case if width is constant
-      # If width is constant (a canal), zero.stage is set to zero.stage.floo
+      # If width is constant (a canal), zero.stage is set to zero.stage.floor
       zero.stage <- zero.stage.floor
       Wb <- df$width[1]
     }else{
@@ -337,9 +337,9 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
   }# if enough obs, calibrate
 
   ###########################################################
-  # If constrain = TRUE and Qgage has coincident daily gage-observed flows
+  # If constrained = TRUE and Qgage has coincident daily gage-observed flows
   # then use the 2-parameter calibration approach for MOMMA
-  if (constrain){
+  if (constrained){
 
     df$nb <- NA
     df$x <- NA
@@ -350,7 +350,7 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
       cdf <- df[(which(df$seg == s)),]
       cdf <- cdf[-which(is.na(cdf$Qgage)),]
 
-      if (nrow(cdf > 2)){# need 3 or more flows to calibrate to
+      if (nrow(cdf) > 2){# need 3 or more flows to calibrate to
         if (s == 1 & !is.na(known_nb_seg1) & !is.na(known_x_seg1)){
           mo[1] <- known_nb_seg1
           mo[2] <- known_x_seg1
@@ -394,9 +394,9 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
   # Compute diagnostic bankfull mean depth derived from bankfull width and mean slope
   Ybd_Wb_Smean <- 0.08 * Wb ^ 0.34 * Smean ^ -0.24 # m
 
-  if (!constrain){df$Q.constrained <- NA}
+  if (!constrained){df$Q.constrained <- NA}
   # assemble into a list for the function return package
-  diag <- list(gage_constrained = constrain,
+  diag <- list(gage_constrained = constrained,
                input_Qm_prior = Qm_prior,
                input_Qb_prior = Qb_prior,
                input_Yb_prior = Yb_prior,
@@ -423,8 +423,8 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
                Qmean_momma = signif(mean(df$Q), 3),
                Qmean_momma.constrained = signif(mean(df$Q.constrained), 3),
                width_stage_corr = cr$estimate)
-  # copy q.constrain to q if constrain
-  if (constrain){
+  # copy q.constrain to q if constrained
+  if (constrained){
     df$Q <- df$Q.constrained
   }
   # attach flow computations and diagnostics and return the package
