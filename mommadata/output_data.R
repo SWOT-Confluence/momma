@@ -12,21 +12,12 @@ write_netcdf <- function(reach_data, momma_list, output_dir) {
   if (isTRUE(reach_data$valid)) {
     # Convert momma_list data data.frame into a named list
     momma_list$data <- convert_to_list(momma_list$data)
-    # # Concatenate invalid nodes back into valid posterior reach data
-    # momma_list <- concatenate_invalid(momma_list, reach_data$invalid_time)
+    # Concatenate invalid nodes back into valid posterior reach data
+    momma_list <- concatenate_invalid(momma_list, reach_data$invalid_time)
     # Replace invalid output with NA
     momma_list <- replace_invalid(momma_list)
   }
 
-  # # ===== Debug =====
-  # cat("nt dimension:", length(reach_data$nt), "\n")
-  # cat("invalid_time:", reach_data$invalid_time, "\n")
-  # cat("length(invalid_time):", length(reach_data$invalid_time), "\n")
-  # cat("length(stage after concat):", length(momma_list$data$stage), "\n")
-  # cat("length(nb after concat):", length(momma_list$data$nb), "\n")
-  # cat("length(x after concat):", length(momma_list$data$x), "\n")
-  # # ======================
- 
   # Determine if output has made the reach invalid
   reach_data$valid <- is_valid(momma_list, length(reach_data$nt))
 
@@ -38,7 +29,7 @@ write_netcdf <- function(reach_data, momma_list, output_dir) {
   if (reach_data$valid == TRUE) valid = 1 else valid = 0
   RNetCDF::att.put.nc(nc_out, "NC_GLOBAL", "valid", "NC_INT", valid)
   RNetCDF::att.put.nc(nc_out, "NC_GLOBAL", "reach_id", "NC_INT64", reach_data$reach_id)
-  # RNetCDF::att.put.nc(nc_out, "NC_GLOBAL", "time_str", "NC_STRING", reach_data$obs_times)
+
   # Dimensions
   RNetCDF::dim.def.nc(nc_out, "nt", length(reach_data$nt))
   RNetCDF::var.def.nc(nc_out, "nt", "NC_INT", "nt")
@@ -48,8 +39,6 @@ write_netcdf <- function(reach_data, momma_list, output_dir) {
   RNetCDF::var.def.nc(nc_out, "time_str", "NC_STRING", "nt")
   RNetCDF::att.put.nc(nc_out, "time_str", "units", "NC_STRING", "time")
   RNetCDF::var.put.nc(nc_out, "time_str", reach_data$obs_times)
-
-
 
   # Write data
   write_data(nc_out, momma_list)
@@ -114,7 +103,6 @@ write_data <- function(nc_out, momma_list) {
 
   # Output variables
   RNetCDF::var.def.nc(nc_out, "gage_constrained", "NC_DOUBLE", NA)
-
   RNetCDF::att.put.nc(nc_out, "gage_constrained", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "gage_constrained", as.numeric(momma_list$output$gage_constrained))
 
@@ -213,16 +201,16 @@ write_data <- function(nc_out, momma_list) {
   RNetCDF::var.def.nc(nc_out, "Qmean_momma", "NC_DOUBLE", NA)
   RNetCDF::att.put.nc(nc_out, "Qmean_momma", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "Qmean_momma", as.numeric(momma_list$output$Qmean_momma))
-# width_stage_corr
+
   RNetCDF::var.def.nc(nc_out, "Qmean_momma.constrained", "NC_DOUBLE", NA)
   RNetCDF::att.put.nc(nc_out, "Qmean_momma.constrained", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "Qmean_momma.constrained", as.numeric(momma_list$output$Qmean_momma.constrained))
-
 
   RNetCDF::var.def.nc(nc_out, "width_stage_corr", "NC_DOUBLE", NA)
   RNetCDF::att.put.nc(nc_out, "width_stage_corr", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "width_stage_corr", as.numeric(momma_list$output$width_stage_corr))
 }
+
 
 #' Convert data.frame parameter to a named list
 #'
@@ -238,39 +226,18 @@ convert_to_list <- function(df) {
   return(l)
 }
 
-#' Insert NA values back into MOMMA list vectors to account for invalid
-#' nodes.
+
+#' Insert NA values back into MOMMA list vectors to account for invalid nodes.
 #'
 #' @param momma_list list of posterior data vectors
 #' @param invalid_time list of invalid time indexes
 #'
 #' @return list of MOMMA data with NA in place of invalid nodes
-# concatenate_invalid <- function(momma_list, invalid_time) {
-
-#   # Time-level data
-#   for (index in invalid_time) {
-#     momma_list$data$stage <- append(momma_list$data$stage, NA, after = index - 1)
-#     momma_list$data$width <- append(momma_list$data$width, NA, after = index - 1)
-#     momma_list$data$slope <- append(momma_list$data$slope, NA, after = index - 1)
-#     momma_list$data$seg <- append(momma_list$data$seg, NA, after = index - 1)
-#     momma_list$data$n <- append(momma_list$data$n, NA, after = index - 1)
-#     momma_list$data$Y <- append(momma_list$data$Y, NA, after = index - 1)
-#     momma_list$data$v <- append(momma_list$data$v, NA, after = index - 1)
-#     momma_list$data$Q <- append(momma_list$data$Q, NA, after = index - 1)
-#     momma_list$data$Qgage <- append(momma_list$data$Qgage, NA, after = index - 1)
-#     momma_list$data$Q.constrained <- append(momma_list$data$Q.constrained, NA, after = index - 1)
-#     momma_list$data$width_stage_corr <- append(momma_list$data$width_stage_corr, NA, after = index - 1)
-#   }
-
-#   return(momma_list)
-
-# }
-
 concatenate_invalid <- function(momma_list, invalid_time) {
   if (length(invalid_time) == 0) return(momma_list)
-  
-  vars <- c("stage", "width", "slope", "seg", "nb", "x", "n", "Y", "v", "Q", "Qgage", "Q.constrained", "width_stage_corr")
-  
+
+  vars <- c("stage", "width", "slope", "seg", "nb", "x", "n", "Y", "v", "Q", "Qgage", "Q.constrained")
+
   for (var in vars) {
     if (!is.null(momma_list$data[[var]])) {
       vec <- momma_list$data[[var]]
@@ -282,13 +249,12 @@ concatenate_invalid <- function(momma_list, invalid_time) {
       momma_list$data[[var]] <- full_vec
     }
   }
-  
+
   return(momma_list)
 }
 
 
-
-#' Replace invalid NaN values with NA for n, Y, v, and Q.
+#' Replace invalid NaN values with NA.
 #'
 #' @param momma_list list of data and diagnostic results
 replace_invalid <- function(momma_list) {
@@ -300,9 +266,9 @@ replace_invalid <- function(momma_list) {
   momma_list$data$Q[is.nan(momma_list$data$Q)] <- NA
   momma_list$data$Qgage[is.nan(momma_list$data$Qgage)] <- NA
   momma_list$data$Q.constrained[is.nan(momma_list$data$Q.constrained)] <- NA
-  momma_list$data$width_stage_corr[is.nan(momma_list$data$width_stage_corr)] <- NA
   return(momma_list)
 }
+
 
 #' Determine if output stored in momma_list is valid.
 #'
