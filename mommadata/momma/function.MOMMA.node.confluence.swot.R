@@ -19,23 +19,27 @@
 # known_nb_seg[n] and known_x_seg[n] are flow law params if they have already been calibrated and are now known
 # constrain: Boolean whether to calibrate to gage data for gage-constrained product
 #
-momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
+momma <- function(node_id, stage, width, slope, shape.param, Qgage = NA, Qm_prior, Qb_prior = NA,
                   Yb_prior = NA, known_ezf = NA, known_bkfl_stage = NA,
                   known_nb_seg1 = NA, known_x_seg1 = NA,
                   known_nb_seg2 = NA, known_x_seg2 = NA,
                   constrain = FALSE){
+    
   #browser()
-  #--Functions called-----------------------
+  #----- Functions called ---------------------------------------
   # source("function.find.rating.break.R")
   # source("function.constrain.momma.nb.x.R")
   # source("function.find.zero.flow.stage.R")
   # source("function.calibrate.Qmean.R")
   # library('hydroGOF')
-  #-----------------------------------------
-  #--Global variables/settings------------------------------------
+  #---------------------------------------------------------------
+    
+  #----- Global variables/settings -------------------------------
   min_nobs <- 3 # minimum number of observations required to entertain making flow calculations
   min_nobs_mean <- 1 # minimum number of observations required to coerce mean of estimated flows to match Qmean_prior
-  shape_param <- 2 # channel shape parameter. 2 = parabolic
+  
+  shape_param <- shape.param # channel shape parameter
+  
   # REQUIRE minimum number of obs and delta stage to look for breakpoints
   n.min = 7 # minimum number of obs required to look for breakpoint in stage-width relation
   stage.range.min = 1.5 # meter; minimum range in observed stage required to look for breakpoint in stage-width relation
@@ -50,19 +54,19 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
   x.max <- 2.0 # maximum allowable value for exponent x
   #---------------------------------------------------------------
 
-  # initialize diagnostic values----------------------
+  # ----- initialize diagnostic values ---------------------------
   # compute diagnostic values
   Frbd <- NA # empirical bankfull Froude number, diagnostic
   Ybd_Wb_Smean <- NA # empirical bankfull depth, diagnostic, m
   nb_seg1 <- NA; nb_seg2 <- NA; x_seg1 <- NA; x_seg2 <- NA # gage-constrained params
-  #---------------------------------------------------
+  #---------------------------------------------------------------
 
   # Form the dataframe, df
   if (length(Qgage) == 0){
     
       df <- data.frame(stage, width, slope)
       df$Qgage <- NA
-    }else{
+    } else {
       df <- data.frame(stage, width, slope, Qgage)
     }
 
@@ -136,6 +140,7 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
     }
   }
 
+
   # find min and max stage values (in meters)
   stage.min <- min(df$stage)
   stage.max <- max(df$stage)
@@ -147,8 +152,10 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
   # channel shape coefficient b based on shape param
   b <- 1 - (1 / (1 + shape_param))
 
+    
   # --------------------------------------------------
-  # Determine Bankfull Stage
+  # Determine Bankfull Stage (Hb)
+  # --------------------------------------------------
   # find a bankfull breakpoint in the relation between w^2 and stage
   # If a suitable bankfull breakpoint cannnot be identified, the max obs stage
   # is assumed to be bankfull stage
@@ -161,8 +168,8 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
       print("We don't have a known bankful stage")
       if (nrow(df) >= n.min & (stage.range > stage.range.min)){
         print( "so we are solving for bankful stage...")
-        bkfl_stage <- find.rating.break(df$width, df$stage, shape.param,
-                                             method = breakpoint.method)
+        bkfl_stage <- find.rating.break(df$width, df$stage, method = breakpoint.method)
+
       }else{
         print("We are replacing the bankful stage with the max...")
         bkfl_stage <- stage.max
@@ -179,9 +186,9 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
       seg2 <- df[which((df$stage >= bkfl_stage) & (df$stage <= stage.max)),]
       if (nrow(seg1) < n.min.seg | nrow(seg2) < n.min.seg |
           (bkfl_stage - stage.min) < stage.range.min.seg |
-          (stage.max - bkfl_stage) < stage.range.min.seg){
+          (stage.max - bkfl_stage) < stage.range.min.seg) {
         bkfl_stage <- stage.max
-      }else{
+      } else {
         # label the above-bankfull segment '2' if a satisfactory bankfull
         # breakpoint is found
         df$seg[which(df$stage > bkfl_stage)] <- 2
@@ -189,22 +196,36 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
       }
     }
 
-  }else{
+  } else {
     bkfl_stage <- stage.max
   }
 
+    
   # Determine the corresponding bankfull width from obs
-  if (sd(df$stage) == 0){ # if all observed stages are constant
+  # if all observed stages are constant
+  if (sd(df$stage) == 0){ 
     Wb_obs <- max(df$width[which(df$stage == bkfl_stage)])
-  }else{
+  } else {
     apx <- approx(x = df$stage, y = df$width, xout = bkfl_stage)
     Wb_obs <- apx$y
   }
+  
   # --------------------------------------------------
-
+  # Determine the zero.stage (EZF) (H0)
   # --------------------------------------------------
-  # Determine the zero.stage (EZF)
   if (is.na(known_ezf)){
+
+    # special case if width is constant
+    if (sd(df$width) == 0){ 
+      Wb <- df$width[1]
+    } else {
+      # function find.zero.stage makes an estimate of the stage of zero flow
+      # via extrapolation of the width^r - elevation relation
+      Wb <- Wb_obs
+        
+      zero.stage <- find.zero.stage(df, nsegs, shape_param, Wb)
+    }
+    
     # Empirically estimate mean bankfull depth from Bjerklie 2007
     Yb_upper95 <- round(0.10 * (Wb_obs ^ 0.43) * (Smean ^ (-0.28)), 2)
     # Bjerklie, D.M., 2007. Estimating the bankfull velocity and discharge for
@@ -213,35 +234,21 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
     # use Yb_upper95 to limit the depth of the EZF estimate (no deeper than)
     zero.stage.floor <- bkfl_stage - Yb_upper95 / b
 
-    if (sd(df$width) == 0){ # special case if width is constant
-      # If width is constant (a canal), zero.stage is set to zero.stage.floo
-      zero.stage <- zero.stage.floor
-      Wb <- df$width[1]
-    }else{
-      # function find.zero.stage makes an estimate of the stage of zero flow
-      # via extrapolation of the width^2 - elevation relation
-      zero.stage <- find.zero.stage(df, nsegs)
-      # enforce zero.stage.floor
-      zero.stage <- max(c(zero.stage, zero.stage.floor))
-      Wb <- Wb_obs
-    }
-    # Backstop: enforce upper limit for EZF
-    # must be at least 1 meter deeper than lowest observed stage
-    if (round(zero.stage, 2) >= round(stage.min - 1.0, 2)){
-      zero.stage <- round(stage.min, 2) - 1.0
-    }
-
-  }else{# if EZF (zero.h) is known from SoS
+  } else {
+    # if EZF (zero.h) is known from SoS
     zero.stage <- known_ezf
     Wb <- Wb_obs
   }
-
+  
   # zero.stage now known. Compute mean bankfull depth
   Yb <- b * (bkfl_stage - zero.stage)
 
+    
   # --------------------------------------------------
   # estimate nb value from empirical formula using slope
+  # --------------------------------------------------
   # https://il.water.usgs.gov/proj/nvalues/equations.shtml?equation=09-bray1
+  
   nb_slope <- 0.094 * (Smean ^ (1 / 6)) # Bray and Davar equation
 
   if (!is.na(Qb_prior)){
@@ -252,7 +259,7 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
     nb_prior <- nb
     # take the mean of the two
     nb_mean <- (nb_prior + nb_slope) / 2
-  }else{
+  } else {
     Vb_derived_from_Qb_prior <- NA
     nb_prior <- NA
     nb_mean <- nb_slope
@@ -265,7 +272,7 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
 
   # Compute mean depths for all obs
   df$Y <- (df$stage - zero.stage) * b # m
-
+    
   # assign default value for exponent x
   df$x <- x.default
 
@@ -281,6 +288,8 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
   # compute discharges for all obs
   df$Q <- df$width * df$Y * df$v # m3/s
 
+
+    
   ###########################################################
   # If enough observations are available, calibrate MOMMA to Qmean prior
   if (nrow(df) >= min_nobs_mean){
@@ -291,17 +300,22 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
                                        nb.min = resist.min, nb.max = resist.max,
                                        exp.x.min = x.min, exp.x.max = x.max)
 
+
     # bad input catch
-    if (length(cal.Qmean) == 1){
-      cat(paste0(cal.Qmean, "\n"))
-      pkg <- list(data = df, output = diag)
+    if (all(is.na(cal.Qmean$Q))) {
+
+      pkg <- list(data = cal.Qmean, output = diag)
+
       return(pkg)
-    }else{
+        
+    } else {
       df <- cal.Qmean
     }
 
 
-    # check for channel thalweg too shallow
+    # --------------------------------------------------
+    # Recalibrate: check for channel thalweg too shallow
+    # --------------------------------------------------
     if (df$nb[1] == resist.min & zero.stage > zero.stage.floor){
       # make channel deeper using the zero.stage.floor value
       zero.stage <- zero.stage.floor
@@ -309,15 +323,18 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
       Yb <- b * (bkfl_stage - zero.stage)
       # Compute mean depths for all obs
       df$Y <- (df$stage - zero.stage) * b # m
-
+    
       # recalibrate
       df <- calibrate.qmean.prior(dframe = df, Qmean_prior = Qm_prior,
-                                         h.max = stage.max, zero.h = zero.stage,
-                                         nb.min = resist.min, nb.max = resist.max,
-                                         exp.x.min = x.min, exp.x.max = x.max)
+                                  h.max = stage.max, zero.h = zero.stage,
+                                  nb.min = resist.min, nb.max = resist.max,
+                                  exp.x.min = x.min, exp.x.max = x.max)
     }
 
-    # check for channel thalweg too deep
+
+    # --------------------------------------------------
+    # Recalibrate: check for channel thalweg too deep
+    # --------------------------------------------------
     if (df$nb[1] == resist.max & zero.stage < stage.min){
       # make channel shallower by splitting the difference between the
       # zero.stage estimate and the lowest observed stage
@@ -327,15 +344,20 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
       # Compute mean depths for all obs
       df$Y <- (df$stage - zero.stage) * b # m
 
+        
       # recalibrate
       df <- calibrate.qmean.prior(dframe = df, Qmean_prior = Qm_prior,
                                   h.max = stage.max, zero.h = zero.stage,
                                   nb.min = resist.min, nb.max = resist.max,
                                   exp.x.min = x.min, exp.x.max = x.max)
+        
     }
-
+      
+  
   }# if enough obs, calibrate
 
+
+    
   ###########################################################
   # If constrain = TRUE and Qgage has coincident daily gage-observed flows
   # then use the 2-parameter calibration approach for MOMMA
@@ -350,14 +372,14 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
       cdf <- df[(which(df$seg == s)),]
       cdf <- cdf[-which(is.na(cdf$Qgage)),]
 
-      if (nrow(cdf > 2)){# need 3 or more flows to calibrate to
+      if (nrow(cdf) > 2){# need 3 or more flows to calibrate to
         if (s == 1 & !is.na(known_nb_seg1) & !is.na(known_x_seg1)){
           mo[1] <- known_nb_seg1
           mo[2] <- known_x_seg1
-        }else if (s == 2 & !is.na(known_nb_seg2) & !is.na(known_x_seg2)){
+        } else if (s == 2 & !is.na(known_nb_seg2) & !is.na(known_x_seg2)){
           mo[1] <- known_nb_seg2
           mo[2] <- known_x_seg2
-        }else{
+        } else {
           mo <- constrain.momma.nb.x(flows = cdf$Qgage, elevations = cdf$stage,
                                      widths = cdf$width, slopes = cdf$slope,
                                      zeroQ.stage = zero.stage,
@@ -385,6 +407,7 @@ momma <- function(stage, width, slope, Qgage = NA, Qm_prior, Qb_prior = NA,
     df$v.constrained <- round(df$Y ^ (2/3) * df$slope ^ 0.5 / df$n.constrained, 3)
     # compute flows with widths, depths, and constrained velocities
     df$Q.constrained <- signif(df$width * df$Y * df$v.constrained, 3)
+
 
   }# constrained flow-calibration option using coincident daily gage-observed Qs
   ##################################################################
