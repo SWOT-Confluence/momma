@@ -1,4 +1,4 @@
 .Rproj.user
 .Rhistory
 .RData
-.terraform
+.terraform.ipynb_checkpoints/
