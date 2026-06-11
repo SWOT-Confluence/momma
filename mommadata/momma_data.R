@@ -12,8 +12,8 @@ source("/app/mommadata/output_data.R")
 source("/app/mommadata/momma/function.find.rating.break.R")
 source("/app/mommadata/momma/function.find.zero.flow.stage.newfunH.R")
 source("/app/mommadata/momma/function.constrain.momma.nb.x.R")
-source("/app/mommadata/momma/function.calibrate.Qmean.optim.R")
-source("/app/mommadata/momma/function.MOMMA.node.confluence.swot.R")
+source("/app/mommadata/momma/function.calibrate.Qmonthly.optim.R")
+source("/app/mommadata/momma/function.MOMMA.node.Qmonthly.R")
 
 # example local deployment
 #sudo docker run -v /mnt/input/:/mnt/data/input -v /mnt/flpe/momma:/mnt/data/output -v ~/.aws:/root/.aws momma -r /mnt/data/input/reaches.json -m 3 -b confluence-sos/unconstrained/0000 -i 5
