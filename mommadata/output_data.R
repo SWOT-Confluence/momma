@@ -9,24 +9,14 @@
 write_netcdf <- function(reach_data, momma_list, output_dir) {
 
   # Prep data for writing
-  if (isTRUE(reach_data$valid)) {
+  if (reach_data$valid == TRUE) {
     # Convert momma_list data data.frame into a named list
     momma_list$data <- convert_to_list(momma_list$data)
-    # # Concatenate invalid nodes back into valid posterior reach data
-    # momma_list <- concatenate_invalid(momma_list, reach_data$invalid_time)
+    # Concatenate invalid nodes back into valid posterior reach data
+    momma_list <- concatenate_invalid(momma_list, reach_data$invalid_time)
     # Replace invalid output with NA
     momma_list <- replace_invalid(momma_list)
   }
-
-  # # ===== Debug =====
-  # cat("nt dimension:", length(reach_data$nt), "\n")
-  # cat("invalid_time:", reach_data$invalid_time, "\n")
-  # cat("length(invalid_time):", length(reach_data$invalid_time), "\n")
-  # cat("length(stage after concat):", length(momma_list$data$stage), "\n")
-  # cat("length(nb after concat):", length(momma_list$data$nb), "\n")
-  # cat("length(x after concat):", length(momma_list$data$x), "\n")
-  # # ======================
- 
   # Determine if output has made the reach invalid
   reach_data$valid <- is_valid(momma_list, length(reach_data$nt))
 
@@ -144,7 +134,7 @@ write_data <- function(nc_out, momma_list) {
 
   RNetCDF::var.def.nc(nc_out, "input_known_x_seg1", "NC_DOUBLE", NA)
   RNetCDF::att.put.nc(nc_out, "input_known_x_seg1", "_FillValue", "NC_DOUBLE", fill)
-  RNetCDF::var.put.nc(nc_out, "input_known_x_seg1", as.numeric(momma_list$output$input_known_x_seg1))
+  RNetCDF::var.put.nc(nc_out, "input_known_x_seg1", as.numeric(momma_list$output$input_known_nb_seg1))
 
   RNetCDF::var.def.nc(nc_out, "Qgage_constrained_nb_seg1", "NC_DOUBLE", NA)
   RNetCDF::att.put.nc(nc_out, "Qgage_constrained_nb_seg1", "_FillValue", "NC_DOUBLE", fill)
@@ -245,55 +235,31 @@ convert_to_list <- function(df) {
 #' @param invalid_time list of invalid time indexes
 #'
 #' @return list of MOMMA data with NA in place of invalid nodes
-# concatenate_invalid <- function(momma_list, invalid_time) {
-
-#   # Time-level data
-#   for (index in invalid_time) {
-#     momma_list$data$stage <- append(momma_list$data$stage, NA, after = index - 1)
-#     momma_list$data$width <- append(momma_list$data$width, NA, after = index - 1)
-#     momma_list$data$slope <- append(momma_list$data$slope, NA, after = index - 1)
-#     momma_list$data$seg <- append(momma_list$data$seg, NA, after = index - 1)
-#     momma_list$data$n <- append(momma_list$data$n, NA, after = index - 1)
-#     momma_list$data$Y <- append(momma_list$data$Y, NA, after = index - 1)
-#     momma_list$data$v <- append(momma_list$data$v, NA, after = index - 1)
-#     momma_list$data$Q <- append(momma_list$data$Q, NA, after = index - 1)
-#     momma_list$data$Qgage <- append(momma_list$data$Qgage, NA, after = index - 1)
-#     momma_list$data$Q.constrained <- append(momma_list$data$Q.constrained, NA, after = index - 1)
-#     momma_list$data$width_stage_corr <- append(momma_list$data$width_stage_corr, NA, after = index - 1)
-#   }
-
-#   return(momma_list)
-
-# }
-
 concatenate_invalid <- function(momma_list, invalid_time) {
-  if (length(invalid_time) == 0) return(momma_list)
-  
-  vars <- c("stage", "width", "slope", "seg", "nb", "x", "n", "Y", "v", "Q", "Qgage", "Q.constrained", "width_stage_corr")
-  
-  for (var in vars) {
-    if (!is.null(momma_list$data[[var]])) {
-      vec <- momma_list$data[[var]]
 
-      nt_total <- length(vec) + length(invalid_time)
-      full_vec <- rep(NA_real_, nt_total)
-      valid_idx <- setdiff(seq_len(nt_total), invalid_time)
-      full_vec[valid_idx] <- as.numeric(vec)
-      momma_list$data[[var]] <- full_vec
-    }
+  # Time-level data
+  for (index in invalid_time) {
+    momma_list$data$stage <- append(momma_list$data$stage, NA, after = index - 1)
+    momma_list$data$width <- append(momma_list$data$width, NA, after = index - 1)
+    momma_list$data$slope <- append(momma_list$data$slope, NA, after = index - 1)
+    momma_list$data$seg <- append(momma_list$data$seg, NA, after = index - 1)
+    momma_list$data$n <- append(momma_list$data$n, NA, after = index - 1)
+    momma_list$data$Y <- append(momma_list$data$Y, NA, after = index - 1)
+    momma_list$data$v <- append(momma_list$data$v, NA, after = index - 1)
+    momma_list$data$Q <- append(momma_list$data$Q, NA, after = index - 1)
+    momma_list$data$Qgage <- append(momma_list$data$Qgage, NA, after = index - 1)
+    momma_list$data$Q.constrained <- append(momma_list$data$Q.constrained, NA, after = index - 1)
+    momma_list$data$width_stage_corr <- append(momma_list$data$width_stage_corr, NA, after = index - 1)
   }
-  
+
   return(momma_list)
+
 }
-
-
 
 #' Replace invalid NaN values with NA for n, Y, v, and Q.
 #'
 #' @param momma_list list of data and diagnostic results
 replace_invalid <- function(momma_list) {
-  momma_list$data$nb[is.nan(momma_list$data$nb)] <- NA
-  momma_list$data$x[is.nan(momma_list$data$x)] <- NA
   momma_list$data$n[is.nan(momma_list$data$n)] <- NA
   momma_list$data$Y[is.nan(momma_list$data$Y)] <- NA
   momma_list$data$v[is.nan(momma_list$data$v)] <- NA

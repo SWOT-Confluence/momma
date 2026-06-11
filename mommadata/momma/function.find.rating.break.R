@@ -10,12 +10,14 @@ find.rating.break <- function(widths, stages, shape.param, method = "wd.ratio"){
   xd <- xd[order(xd$stages),]
   xdf <- data.frame(matrix(vector(), np, 2, dimnames=list(c(), c("stages", "widths"))), stringsAsFactors=F)
   
-  xapprox <- approx(x=xd$stages, y=xd$widths, method="linear", n = np) 
+  xapprox <- approx(xd, method="linear", n = np)
   
   xdf$stages <- xapprox$x
   xdf$widths <- xapprox$y
   
   rm(xd, xapprox)
+
+  #plot(xdf$widths, xdf$stages, pch = 20, tck = 0.02) # uncomment for testing/debug only
 
   colnames(xdf) <- c("h", "w")
   # set up an arbitrary datum for depth for purposes of width/depth ratio
@@ -35,6 +37,8 @@ find.rating.break <- function(widths, stages, shape.param, method = "wd.ratio"){
     xdf$hhat <- m.slope * xdf$w2 + b.intcp
     xdf$resid <- abs(xdf$hhat - xdf$h)
     
+    #plot(xdf$w2, xdf$resid, pch = 20, tck = 0.02)
+    
     break.point <- ifelse(xdf$h[which.max(xdf$resid)] >= thresh, xdf$h[which.max(xdf$resid)], NA)
     
     return(break.point)
@@ -44,6 +48,8 @@ find.rating.break <- function(widths, stages, shape.param, method = "wd.ratio"){
   # METHOD: Minimum Width-Depth Ratio
   if (method == "wd.ratio"){
     xdf$wd.ratio <- xdf$w / xdf$d
+    
+    #plot(xdf$h, xdf$wd.ratio, pch = 20, tck = 0.02)
 
     break.point <- xdf$h[which.min(xdf$wd.ratio)]
     
