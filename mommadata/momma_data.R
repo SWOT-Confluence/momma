@@ -118,6 +118,30 @@ Mode <- function(x) {
 }
 
 
+robust_reach_mean <- function(x, min_n = 3, ratio_limit = 5) {
+  x <- x[is.finite(x)]
+
+  if (length(x) < min_n) return(NA_real_)
+
+  med <- median(x, na.rm = TRUE)
+
+  if (med <= 0) {
+    mad_val <- mad(x, center = med, constant = 1, na.rm = TRUE)
+    if (mad_val == 0) return(mean(x, na.rm = TRUE))
+    keep <- abs(x - med) <= 3 * mad_val
+  } else {
+    keep <- x <= ratio_limit * med
+  }
+
+  x_keep <- x[keep]
+
+  if (length(x_keep) < min_n) return(NA_real_)
+
+  mean(x_keep, na.rm = TRUE)
+}
+
+
+
 #' Run MOMMA
 #'
 #' Write output from MOMMA execution on each reach data input.
@@ -308,12 +332,13 @@ run_momma <- function() {
     summarise(
       seg = Mode(seg),
       across(
-        c(stage, width, slope, Qgage, nb, x, n, Y, v, Q, Q.constrained),
+        c(stage, width, slope, Qgage, nb, x, n, Y, v, Q.constrained),
         ~ {
           x <- as.numeric(.x)
           if (sum(!is.na(x)) >= 3) mean(x, na.rm = TRUE) else NA_real_
         }
       ),
+      Q = robust_reach_mean(Q, min_n = 3, ratio_limit = 5),
       .groups = "drop"
     )
 

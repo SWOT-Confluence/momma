@@ -192,23 +192,20 @@ momma <- function(node_id, stage, width, slope, shape.param, Qgage = NA, Qm_prio
           (bkfl_stage - stage.min) < stage.range.min.seg |
           (stage.max - bkfl_stage) < stage.range.min.seg) {
         bkfl_stage <- stage.max
-        # tree <- paste0(tree, "_segX")
+
       }else{
         # label the above-bankfull segment '2' if a satisfactory bankfull
         # breakpoint is found
         df$seg[which(df$stage > bkfl_stage)] <- 2
         nsegs <- 2
 
-        # tree <- paste0(tree, "_seg2")
       }
     }
 
   }else{
     bkfl_stage <- stage.max
-    # tree <- paste0(tree, "_segX")
   }
 
-  # cat("[FINISH] Determine Bankfull H\n")
 
     
   # Determine the corresponding bankfull width from obs
@@ -218,8 +215,7 @@ momma <- function(node_id, stage, width, slope, shape.param, Qgage = NA, Qm_prio
     apx <- approx(x = df$stage, y = df$width, xout = bkfl_stage)
     Wb_obs <- apx$y
   }
-  # cat("[FINISH] Determine Bankfull W\n")
-  # --------------------------------------------------
+
 
   # --------------------------------------------------
   # Determine the zero.stage (EZF)
@@ -236,26 +232,10 @@ momma <- function(node_id, stage, width, slope, shape.param, Qgage = NA, Qm_prio
       Wb <- Wb_obs
         
       zero.stage <- find.zero.stage(df, nsegs, shape_param, plot.dir, node_id, idx, stage.min, zero.stage.floor, Wb)
-      # est_param <- find.zero.stage(df, nsegs, plot.dir, node_id, idx, stage.min, Wb)
-      # cat("H0: funH\n")
-      # # cat("H0_func = ", zero.stage, "\n")
-      # # enforce zero.stage.floor
-      # zero.stage <- max(c(zero.stage, zero.stage.floor))
+
         
     }
-    # # Backstop: enforce upper limit for EZF
-    # # must be at least 1 meter deeper than lowest observed stage
-    # if (round(zero.stage, 2) >= round(stage.min - 1.0, 2)){
-    #   zero.stage <- round(stage.min, 2) - 1.0
-    # }
 
-    # zero.stage <- est_param$zero.h
-    # shape_param <- est_param$r
-    # cat(sprintf("===> BEST FIT: r = %.2f, H0 = %.3f, ", shape_param, zero.stage))
-
-    # # channel shape coefficient b based on shape param
-    # b <- 1 - (1 / (1 + shape_param))
-    # cat(sprintf("b = %.3f ===\n", b))
       
     # Empirically estimate mean bankfull depth from Bjerklie 2007
     Yb_upper95 <- round(0.10 * (Wb_obs ^ 0.43) * (Smean ^ (-0.28)), 2)
@@ -264,19 +244,12 @@ momma <- function(node_id, stage, width, slope, shape.param, Qgage = NA, Qm_prio
     # J. Hydrol. 341 (3–4), 144–155.
     # use Yb_upper95 to limit the depth of the EZF estimate (no deeper than)
     zero.stage.floor <- bkfl_stage - Yb_upper95 / b
-    # zero.stage <- min(zero.stage.floor, zero.stage)
 
   } else {# if EZF (zero.h) is known from SoS
     zero.stage <- known_ezf
     Wb <- Wb_obs
-
-    # cat("H0_prior = ", zero.stage, "\n")
   }
-  # tree <- paste0(tree, "_H0=", zero.stage)
-  # tree <- paste0(tree, "_Wb=", Wb)
 
-  # cat("[FINAL] H0 = ", zero.stage, "\n")
-  # cat("[FINISH] Determine zero H\n")
     
   # zero.stage now known. Compute mean bankfull depth
   Yb <- b * (bkfl_stage - zero.stage)
@@ -328,8 +301,6 @@ momma <- function(node_id, stage, width, slope, shape.param, Qgage = NA, Qm_prio
   df$Q <- df$width * df$Y * df$v # m3/s
 
 
-  # cat("[FINISH] Compute df\n")
-
 
     
   ###########################################################
@@ -345,14 +316,10 @@ momma <- function(node_id, stage, width, slope, shape.param, Qgage = NA, Qm_prio
 
 
     # bad input catch
-    # if (length(cal.Qmean) == 1){
     if (all(is.na(cal.Qmean$Q))) {
-      # cat(paste0(cal.Qmean, "\n"))
-      # pkg <- list(data = df, output = diag, shape_param = shape_param)
+
       pkg <- list(data = cal.Qmean, output = diag, shape_param = shape_param)
 
-      # cat("================================> Calibration :", "\n")
-        
       return(pkg)
     } else {
       df <- cal.Qmean
@@ -416,8 +383,6 @@ momma <- function(node_id, stage, width, slope, shape.param, Qgage = NA, Qm_prio
   # then use the 2-parameter calibration approach for MOMMA
   if (constrain){
 
-    # cat("~~~~~ CONSTRAINED ~~~~~\n")
-
     df$nb <- NA
     df$x <- NA
     mo <- c(NA,NA)
@@ -463,9 +428,6 @@ momma <- function(node_id, stage, width, slope, shape.param, Qgage = NA, Qm_prio
     # compute flows with widths, depths, and constrained velocities
     df$Q.constrained <- signif(df$width * df$Y * df$v.constrained, 3)
 
-    # cat("=>:", "\n")
-    # print(df)
-    # cat("~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n")
 
   }# constrained flow-calibration option using coincident daily gage-observed Qs
   ##################################################################
