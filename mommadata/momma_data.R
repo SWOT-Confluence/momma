@@ -2,18 +2,14 @@
 library(reticulate)
 library(optparse)
 
-library(purrr)
-library(dplyr)
-library(hydroGOF)
-
 # Local
 source("/app/mommadata/input_data.R")
 source("/app/mommadata/output_data.R")
 source("/app/mommadata/momma/function.find.rating.break.R")
-source("/app/mommadata/momma/function.find.zero.flow.stage.newfunH.R")
+source("/app/mommadata/momma/function.find.zero.flow.stage.R")
 source("/app/mommadata/momma/function.constrain.momma.nb.x.R")
-source("/app/mommadata/momma/function.calibrate.Qmean.optim.R")
-source("/app/mommadata/momma/function.MOMMA.node.confluence.swot.R")
+source("/app/mommadata/momma/function.calibrate.Qmean.R")
+source("/app/mommadata/momma/function.MOMMA.confluence.swot.v3.3.2.R")
 
 # example local deployment
 #sudo docker run -v /mnt/input/:/mnt/data/input -v /mnt/flpe/momma:/mnt/data/output -v ~/.aws:/root/.aws momma -r /mnt/data/input/reaches.json -m 3 -b confluence-sos/unconstrained/0000 -i 5
@@ -111,13 +107,6 @@ create_momma_list <- function(nt) {
   return(list(data = data, output = output))
 }
 
-
-Mode <- function(x) {
-  ux <- unique(x)
-  ux[which.max(tabulate(match(x, ux)))]
-}
-
-
 #' Run MOMMA
 #'
 #' Write output from MOMMA execution on each reach data input.
@@ -176,197 +165,22 @@ run_momma <- function() {
 
   # Create empty placeholder list
   momma_results <- create_momma_list(length(reach_data$nt))
-
-  # shape parameter, r 
-  shape.param <- 0.8 
-  # r <= 1, convex shape
-  # r == 2, parabolic shape
-  # r => 10, rectangular shape
-    
-
   # Run MOMMA on valid input reach data
-  momma_results_node <- vector("list", length(reach_data))
-  for (i in 1:length(reach_data)) {
-    if (reach_data[[i]]$valid == TRUE) {
-        print('running momma')
-        momma_results_node[[i]] <- momma(node_id = reach_data[[i]]$node_id,
-                                         stage = reach_data[[i]]$wse,
-                                         width = reach_data[[i]]$width,
-                                         slope = reach_data[[i]]$slope2,
-                                         shape.param = shape.param,
-                                         Qb_prior = reach_data[[i]]$Qb,
-                                         Qm_prior = reach_data[[i]]$Qm,
-                                         Yb_prior = reach_data[[i]]$db,
-                                         Qgage = reach_data[[i]]$Qgage,
-                                         constrain = constrained)
-
-        valid_times <- reach_data[[i]]$obs_times[-reach_data[[i]]$invalid_time]
-        valid_dates <- sub("T.*", "", valid_times)
-        momma_results_node[[i]]$data$date <- valid_dates
-
-    }else{
-        print('decided not to run')
-        momma_results_node[[i]] <- NULL
-    }
+  if (reach_data$valid == TRUE) {
+    print('running momma')
+    momma_results <- momma(stage = reach_data$wse,
+                           width = reach_data$width,
+                           slope = reach_data$slope2,
+                           Qb_prior = reach_data$Qb,
+                           Qm_prior = reach_data$Qm,
+                           Yb_prior = reach_data$db,
+                           Qgage = reach_data$Qgage)
+  }else{
+    print('decided not to run')
   }
-
-  # =========================================================================
-  # Average reach_data inputs across nodes by date
-  # =========================================================================
-  valid_reach_data <- keep(reach_data, ~ isTRUE(.x$valid))
-
-  if (length(valid_reach_data) == 0) {
-      return(NULL)
-  }
-
-  # base structure
-  template <- valid_reach_data[[1]]
-  n_time <- length(template$nt)
-
-  reach_node_full <- map_dfr(valid_reach_data, function(x) {
-
-      # NA vector
-      wse_full <- rep(NA_real_, n_time)
-      width_full <- rep(NA_real_, n_time)
-      slope2_full <- rep(NA_real_, n_time)
-    
-      valid_idx <- setdiff(seq_len(n_time), x$invalid_time)
-    
-      wse_full[valid_idx] <- as.numeric(x$wse)
-      width_full[valid_idx] <- as.numeric(x$width)
-      slope2_full[valid_idx] <- as.numeric(x$slope2)
-    
-      tibble(
-        nt = template$nt,
-        time_str = template$obs_times,
-        wse = wse_full,
-        width = width_full,
-        slope2 = slope2_full
-      )
-  })
-
-  reach_input_avg_df <- reach_node_full %>%
-    group_by(nt, time_str) %>%
-    summarise(
-        n_wse = sum(!is.na(wse)),
-        n_width = sum(!is.na(width)),
-        n_slope2 = sum(!is.na(slope2)),
-
-        wse = if (n_wse >= 3) mean(wse, na.rm = TRUE) else NA_real_,
-        width = if (n_width >= 3) mean(width, na.rm = TRUE) else NA_real_,
-        slope2 = if (n_slope2 >= 3) mean(slope2, na.rm = TRUE) else NA_real_,
-
-        .groups = "drop"
-    )
-
-  reach_data_avg <- template
-
-  reach_data_avg$wse <- reach_input_avg_df$wse
-  reach_data_avg$width <- reach_input_avg_df$width
-  reach_data_avg$slope2 <- reach_input_avg_df$slope2
-
-  reach_data_avg$nt <- reach_input_avg_df$nt
-  reach_data_avg$time_str <- reach_input_avg_df$time_str
-  reach_data_avg$obs_times <- reach_input_avg_df$time_str
-
-  reach_data_avg$invalid_time <- which(
-      is.na(reach_data_avg$wse) |
-      is.na(reach_data_avg$width) |
-      is.na(reach_data_avg$slope2)
-  )
-
-  # check valid time
-  reach_data_avg$valid <- length(reach_data_avg$invalid_time) < length(reach_data_avg$nt)
-
-  reach_df <- tibble(time_str = reach_data_avg$time_str,
-                     date = suppressWarnings(as.Date(ifelse(time_str == "no_data", NA, sub("T.*", "", time_str)))),
-                     nt = reach_data_avg$nt,
-                     wse = reach_data_avg$wse,
-                     width = reach_data_avg$width,
-                     slope = reach_data_avg$slope2
-                    )
-        
-  
-  valid_momma <- momma_results_node[!map_lgl(momma_results_node, is.null)]
-        
-  if (length(valid_momma) == 0) {
-      mean_by_date2 <- tibble(
-      date = as.Date(character()),
-      seg = numeric(),
-      Qgage = numeric(),
-      n = numeric(),
-      Y = numeric(),
-      v = numeric(),
-      Q = numeric(),
-      Q.constrained = numeric()
-      )
-  } else {
-      all_node_data <- map_dfr(valid_momma, ~ .x$data)
-
-  mean_by_date <- all_node_data %>%
-    group_by(date) %>%
-    summarise(
-      seg = Mode(seg),
-      across(
-        c(stage, width, slope, Qgage, nb, x, n, Y, v, Q, Q.constrained),
-        ~ {
-          x <- as.numeric(.x)
-          if (sum(!is.na(x)) >= 3) mean(x, na.rm = TRUE) else NA_real_
-        }
-      ),
-      .groups = "drop"
-    )
-
-  mean_by_date2 <- mean_by_date %>%
-    mutate(date = as.Date(date)) %>%
-    select(-width, -slope)
-  }
-
-        
-
-  result <- left_join(reach_df,
-                      mean_by_date2,
-                      by = "date"
-                     )
-
-
-  reach_data_avg[c("node_id")] <- NULL
-
-        
-  final_result <- list(
-      data = data.frame(stage = as.numeric(result$wse),
-                        width = as.numeric(result$width),
-                        slope = as.numeric(result$slope),
-                        Qgage = as.numeric(result$Qgage),
-                        seg = as.numeric(result$seg),
-                        n = as.numeric(result$n),
-                        nb = as.numeric(result$nb),
-                        x = as.numeric(result$x),
-                        Y = as.numeric(result$Y),
-                        v = as.numeric(result$v),
-                        Q = as.numeric(result$Q),
-                        Q.constrained = as.numeric(result$Q.constrained)),
-      # ******************** TODO: All variables are currently set to NA and need to be updated later ********************
-      output = setNames(
-          as.list(rep(NA_real_, 27)),
-          c("gage_constrained", "input_Qm_prior", "input_Qb_prior", "input_Yb_prior",
-              "input_known_ezf", "input_known_bkfl_stage",
-              "input_known_nb_seg1", "input_known_x_seg1",
-              "Qgage_constrained_nb_seg1", "Qgage_constrained_x_seg1",
-              "input_known_nb_seg2", "input_known_x_seg2",
-              "Qgage_constrained_nb_seg2", "Qgage_constrained_x_seg2",
-              "n_bkfl_Qb_prior", "n_bkfl_slope", "vel_bkfl_Qb_prior",
-              "Froude_bkfl_diag_Smean", "width_bkfl_solved_obs",
-              "depth_bkfl_solved_obs", "depth_bkfl_diag_Wb_Smean",
-              "zero_flow_stage", "bankfull_stage", "Qmean_prior",
-              "Qmean_momma", "Qmean_momma.constrained", "width_stage_corr"
-            )
-      )
-  )
 
   # Write posteriors to netCDF
-  write_netcdf(reach_data_avg, final_result, output_dir)
+  write_netcdf(reach_data, momma_results, output_dir)
 }
-
 
 run_momma()
