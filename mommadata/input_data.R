@@ -126,7 +126,6 @@ get_input_data <- function(swot_file, sos_file, reach_id, reach_id_v16, min_nobs
       
     # }
 
-    # cat("\n===== Qgage =====\n", Qgage, "\n======================\n")
   }
 
 
@@ -136,8 +135,8 @@ get_input_data <- function(swot_file, sos_file, reach_id, reach_id_v16, min_nobs
   RNetCDF::close.nc(swot_input)
   RNetCDF::close.nc(sos_input)
 
-  obs_list <- vector("list", nx)
-  for (ix in seq_len(nx)) {
+  obs_list <- vector("list", length(nx))
+  for (ix in nx) {
       
       node_id <- node_ids[ix]
       index <- which(node_ids==node_id, arr.ind=TRUE)
