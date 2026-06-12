@@ -175,3 +175,38 @@ get_input_data <- function(swot_file, sos_file, reach_id, reach_id_v16, min_nobs
     
     return(obs_list)
 }
+
+#' Checks if observation data is valid.
+#'
+#' @param width vector
+#' @param wse vector
+#' @param slope2 vector
+#' @param nt integer
+#'
+#' @return list of valid observations or an empty list if there are none
+check_observations <- function(width, wse, slope2, nt, min_nobs, Qgage) {
+  # Test for negative data
+  width[width < 0] <- NA
+  slope2[slope2 < 0] <- NA
+
+  # Track invalid time
+  invalid_width <- which(is.na(width))
+  invalid_wse <- which(is.na(wse))
+  invalid_slope2 <- which(is.na(slope2))
+  invalid_time <- sort(unique(c(invalid_width, invalid_wse, invalid_slope2)))
+
+  # Keep valid data from width, wse, and slope2
+  valid_time <- !c(1:nt) %in% invalid_time
+
+  width <- width[valid_time]
+  wse <- wse[valid_time]
+  slope2 <- slope2[valid_time]
+  Qgage <- Qgage[valid_time]
+
+  # Return a list of valid or invalid observation data
+  if (length(width) < min_nobs || length(wse) < min_nobs || length(slope2) < min_nobs) { 
+    return(vector(mode = "list"))
+  }  else { 
+    return(list(width = width, wse = wse, slope2 = slope2, invalid_time = invalid_time, Qgage = Qgage)) 
+  }
+}
