@@ -220,7 +220,10 @@ run_momma <- function() {
                                          shape.param = shape.param,
                                          Qb_prior = reach_data[[i]]$Qb,
                                          Qm_prior = reach_data[[i]]$Qm,
+                                         Qmon_prior = reach_data[[i]]$Qmon,
                                          Yb_prior = reach_data[[i]]$db,
+                                         obs_times = reach_data[[i]]$obs_times,
+                                         invalid_time = reach_data[[i]]$invalid_time, 
                                          Qgage = reach_data[[i]]$Qgage,
                                          constrain = constrained)
 

@@ -1,5 +1,5 @@
 
-find.rating.break <- function(widths, stages, shape.param, method = "wd.ratio"){
+find.rating.break <- function(widths, stages, method = "wd.ratio"){
 # methods: wd.ratio or max.resid
   
   #========================

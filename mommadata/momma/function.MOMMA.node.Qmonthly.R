@@ -231,7 +231,7 @@ momma <- function(node_id, stage, width, slope, shape.param, Qgage = NA, Qm_prio
       # via extrapolation of the width^r - elevation relation
       Wb <- Wb_obs
         
-      zero.stage <- find.zero.stage(df, nsegs, shape_param, plot.dir, node_id, idx, stage.min, zero.stage.floor, Wb)
+      zero.stage <- find.zero.stage(df, nsegs, shape_param, Wb)
 
         
     }
