@@ -227,9 +227,10 @@ run_momma <- function() {
                                          Qgage = reach_data[[i]]$Qgage,
                                          constrain = constrained)
 
-        valid_times <- reach_data[[i]]$obs_times[-reach_data[[i]]$invalid_time]
-        valid_dates <- sub("T.*", "", valid_times)
-        momma_results_node[[i]]$data$date <- valid_dates
+        valid_idx <- setdiff(seq_along(reach_data[[i]]$obs_times), reach_data[[i]]$invalid_time)
+        valid_times <- reach_data[[i]]$obs_times[valid_idx]
+        momma_results_node[[i]]$data$time_str <- valid_times
+        momma_results_node[[i]]$data$nt <- reach_data[[i]]$nt[valid_idx]
 
     }else{
         print('decided not to run')
@@ -306,7 +307,6 @@ run_momma <- function() {
   reach_data_avg$valid <- length(reach_data_avg$invalid_time) < length(reach_data_avg$nt)
 
   reach_df <- tibble(time_str = reach_data_avg$time_str,
-                     date = suppressWarnings(as.Date(ifelse(time_str == "no_data", NA, sub("T.*", "", time_str)))),
                      nt = reach_data_avg$nt,
                      wse = reach_data_avg$wse,
                      width = reach_data_avg$width,
@@ -317,21 +317,21 @@ run_momma <- function() {
   valid_momma <- momma_results_node[!map_lgl(momma_results_node, is.null)]
         
   if (length(valid_momma) == 0) {
-      mean_by_date2 <- tibble(
-      date = as.Date(character()),
-      seg = numeric(),
-      Qgage = numeric(),
-      n = numeric(),
-      Y = numeric(),
-      v = numeric(),
-      Q = numeric(),
-      Q.constrained = numeric()
-      )
+      mean_by_date2 <- tibble(nt = numeric(),
+                              time_str = character(),
+                              seg = numeric(),
+                              Qgage = numeric(),
+                              n = numeric(),
+                              Y = numeric(),
+                              v = numeric(),
+                              Q = numeric(),
+                              Q.constrained = numeric()
+                             )
   } else {
       all_node_data <- map_dfr(valid_momma, ~ .x$data)
 
   mean_by_date <- all_node_data %>%
-    group_by(date) %>%
+    group_by(nt, time_str) %>%
     summarise(
       seg = Mode(seg),
       across(
@@ -346,7 +346,6 @@ run_momma <- function() {
     )
 
   mean_by_date2 <- mean_by_date %>%
-    mutate(date = as.Date(date)) %>%
     select(-width, -slope)
   }
 
@@ -354,10 +353,12 @@ run_momma <- function() {
 
   result <- left_join(reach_df,
                       mean_by_date2,
-                      by = "date"
+                      by = c("nt", "time_str")
                      )
 
-
+  reach_data_avg$time_str <- result$time_str
+  reach_data_avg$obs_times <- result$time_str
+  reach_data_avg$nt <- result$nt
   reach_data_avg[c("node_id")] <- NULL
 
         
@@ -392,6 +393,11 @@ run_momma <- function() {
       )
   )
 
+  # cat("length time_str:", length(reach_data_avg$obs_times), "\n")
+  # cat("nrow data:", nrow(final_result$data), "\n")
+  # cat("length Q:", length(final_result$data$Q), "\n")
+  # cat("length stage:", length(final_result$data$stage), "\n")
+        
   # Write posteriors to netCDF
   write_netcdf(reach_data_avg, final_result, output_dir)
 }
