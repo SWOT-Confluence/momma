@@ -393,10 +393,18 @@ run_momma <- function() {
       )
   )
 
-  # cat("length time_str:", length(reach_data_avg$obs_times), "\n")
-  # cat("nrow data:", nrow(final_result$data), "\n")
-  # cat("length Q:", length(final_result$data$Q), "\n")
-  # cat("length stage:", length(final_result$data$stage), "\n")
+  # Keep only timesteps with valid MOMMA Q
+  valid_q <- !is.na(final_result$data$Q)
+
+  reach_data_avg$nt <- reach_data_avg$nt[valid_q]
+  reach_data_avg$obs_times <- reach_data_avg$obs_times[valid_q]
+  reach_data_avg$time_str <- reach_data_avg$time_str[valid_q]
+
+  final_result$data <- final_result$data[valid_q, , drop = FALSE]
+
+  stopifnot(length(reach_data_avg$obs_times) == nrow(final_result$data))
+  stopifnot(length(reach_data_avg$nt) == nrow(final_result$data))
+        
         
   # Write posteriors to netCDF
   write_netcdf(reach_data_avg, final_result, output_dir)
