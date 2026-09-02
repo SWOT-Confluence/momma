@@ -221,9 +221,17 @@ momma <- function(node_id, stage, width, slope, shape.param, Qgage = NA, Qm_prio
   # Determine the zero.stage (EZF)
   if (is.na(known_ezf)) {
 
+    # Empirically estimate mean bankfull depth from Bjerklie 2007
+    Yb_upper95 <- round(0.10 * (Wb_obs ^ 0.43) * (Smean ^ (-0.28)), 2)
+    # Bjerklie, D.M., 2007. Estimating the bankfull velocity and discharge for
+    # rivers using remotely sensed river morphology information.
+    # J. Hydrol. 341 (3–4), 144–155.
+    # use Yb_upper95 to limit the depth of the EZF estimate (no deeper than)
+    zero.stage.floor <- bkfl_stage - Yb_upper95 / b
+
     if (sd(df$width) == 0) { # special case if width is constant
       # # If width is constant (a canal), zero.stage is set to zero.stage.floor
-      # zero.stage <- zero.stage.floor
+      zero.stage <- zero.stage.floor
       Wb <- df$width[1]
 
     } else {
@@ -232,18 +240,9 @@ momma <- function(node_id, stage, width, slope, shape.param, Qgage = NA, Qm_prio
       Wb <- Wb_obs
         
       zero.stage <- find.zero.stage(df, nsegs, shape_param, Wb)
-
         
     }
 
-      
-    # Empirically estimate mean bankfull depth from Bjerklie 2007
-    Yb_upper95 <- round(0.10 * (Wb_obs ^ 0.43) * (Smean ^ (-0.28)), 2)
-    # Bjerklie, D.M., 2007. Estimating the bankfull velocity and discharge for
-    # rivers using remotely sensed river morphology information.
-    # J. Hydrol. 341 (3–4), 144–155.
-    # use Yb_upper95 to limit the depth of the EZF estimate (no deeper than)
-    zero.stage.floor <- bkfl_stage - Yb_upper95 / b
 
   } else {# if EZF (zero.h) is known from SoS
     zero.stage <- known_ezf
