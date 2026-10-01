@@ -407,7 +407,13 @@ run_momma <- function() {
         
         
   # Write posteriors to netCDF
-  write_netcdf(reach_data_avg, final_result, output_dir)
+  write_netcdf(
+    reach_data_avg, 
+    final_result, 
+    output_dir,
+    momma_results_node = momma_results_node,
+    reach_data_node = reach_data
+  )
 }
 
 
