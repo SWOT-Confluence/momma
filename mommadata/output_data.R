@@ -266,7 +266,7 @@ write_node_data <- function(
 
     # Dimensions inside /node
     RNetCDF::dim.def.nc(node_group, "node", n_nodes)
-    RNetCDF::dim.def.nc(node_group, "nt", n_time)
+    RNetCDF::dim.def.nc(node_group, "node_nt", n_time)
 
     # ---------------------------------------------------------
     # Node ID
@@ -279,22 +279,14 @@ write_node_data <- function(
         numeric(1)
     )
 
-    RNetCDF::var.put.nc(
-        node_group,
-        "node_id",
-        node_ids
-    )
+    RNetCDF::var.put.nc(node_group, "node_id", node_ids)
 
     # ---------------------------------------------------------
     # Common time coordinate
     # ---------------------------------------------------------
-    RNetCDF::var.def.nc(node_group, "nt", "NC_INT", "nt")
+    RNetCDF::var.def.nc(node_group, "nt", "NC_INT", "node_nt")
 
-    RNetCDF::var.put.nc(
-        node_group,
-        "nt",
-        reach_nt
-    )
+    RNetCDF::var.put.nc(node_group, "nt", reach_nt)
 
     # Variables to save
     vars <- c(
@@ -315,11 +307,7 @@ write_node_data <- function(
     # ---------------------------------------------------------
     for (var in vars) {
 
-        mat <- matrix(
-            fill,
-            nrow = n_nodes,
-            ncol = n_time
-        )
+        mat <- matrix(fill, nrow = n_nodes, ncol = n_time)
 
         for (j in seq_along(valid_idx)) {
 
@@ -351,26 +339,11 @@ write_node_data <- function(
             var
         }
 
-        RNetCDF::var.def.nc(
-            node_group,
-            nc_var,
-            "NC_DOUBLE",
-            c("node", "nt")
-        )
+        RNetCDF::var.def.nc(node_group, nc_var, "NC_DOUBLE", c("node", "node_nt"))
 
-        RNetCDF::att.put.nc(
-            node_group,
-            nc_var,
-            "_FillValue",
-            "NC_DOUBLE",
-            fill
-        )
+        RNetCDF::att.put.nc(node_group, nc_var, "_FillValue", "NC_DOUBLE", fill)
 
-        RNetCDF::var.put.nc(
-            node_group,
-            nc_var,
-            mat
-        )
+        RNetCDF::var.put.nc(node_group, nc_var, mat)
     }
 
     invisible(NULL)
