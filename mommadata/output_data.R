@@ -6,7 +6,13 @@
 #' @param reach_data list of reach data (observations)
 #' @param momma_list list of posterior data
 #' @param output_dir string path to output directory
-write_netcdf <- function(reach_data, momma_list, output_dir) {
+write_netcdf <- function(
+  reach_data, 
+  momma_list, 
+  output_dir,
+  momma_results_node = NULL,
+  reach_data_node = NULL
+) {
 
   # Prep data for writing
   if (isTRUE(reach_data$valid)) {
@@ -53,6 +59,16 @@ write_netcdf <- function(reach_data, momma_list, output_dir) {
 
   # Write data
   write_data(nc_out, momma_list)
+
+  # Write node-level MOMMA results
+  if (!is.null(momma_results_node) && !is.null(reach_data_node)) {
+    write_node_data(
+        nc_out,
+        momma_results_node,
+        reach_data_node,
+        reach_data$nt
+    )
+}
 
   # Close nc file
   RNetCDF::close.nc(nc_out)
@@ -222,6 +238,142 @@ write_data <- function(nc_out, momma_list) {
   RNetCDF::var.def.nc(nc_out, "width_stage_corr", "NC_DOUBLE", NA)
   RNetCDF::att.put.nc(nc_out, "width_stage_corr", "_FillValue", "NC_DOUBLE", fill)
   RNetCDF::var.put.nc(nc_out, "width_stage_corr", as.numeric(momma_list$output$width_stage_corr))
+}
+
+write_node_data <- function(
+    nc_out,
+    momma_results_node,
+    reach_data_node,
+    reach_nt
+) {
+
+    fill <- -999999999999
+
+    # Keep only nodes where MOMMA was actually run
+    valid_idx <- which(!vapply(momma_results_node, is.null, logical(1)))
+
+    if (length(valid_idx) == 0) {
+        return(invisible(NULL))
+    }
+
+    n_nodes <- length(valid_idx)
+    n_time  <- length(reach_nt)
+
+    # ---------------------------------------------------------
+    # Create node group
+    # ---------------------------------------------------------
+    node_group <- RNetCDF::grp.def.nc(nc_out, "node")
+
+    # Dimensions inside /node
+    RNetCDF::dim.def.nc(node_group, "node", n_nodes)
+    RNetCDF::dim.def.nc(node_group, "nt", n_time)
+
+    # ---------------------------------------------------------
+    # Node ID
+    # ---------------------------------------------------------
+    RNetCDF::var.def.nc(node_group, "node_id", "NC_INT64", "node")
+
+    node_ids <- vapply(
+        valid_idx,
+        function(i) as.numeric(reach_data_node[[i]]$node_id),
+        numeric(1)
+    )
+
+    RNetCDF::var.put.nc(
+        node_group,
+        "node_id",
+        node_ids
+    )
+
+    # ---------------------------------------------------------
+    # Common time coordinate
+    # ---------------------------------------------------------
+    RNetCDF::var.def.nc(node_group, "nt", "NC_INT", "nt")
+
+    RNetCDF::var.put.nc(
+        node_group,
+        "nt",
+        reach_nt
+    )
+
+    # Variables to save
+    vars <- c(
+        "stage",
+        "width",
+        "slope",
+        "seg",
+        "n",
+        "nb",
+        "x",
+        "Y",
+        "v",
+        "Q"
+    )
+
+    # ---------------------------------------------------------
+    # Build node x time matrices
+    # ---------------------------------------------------------
+    for (var in vars) {
+
+        mat <- matrix(
+            fill,
+            nrow = n_nodes,
+            ncol = n_time
+        )
+
+        for (j in seq_along(valid_idx)) {
+
+            i <- valid_idx[j]
+
+            dat <- momma_results_node[[i]]$data
+
+            if (is.null(dat[[var]]) || is.null(dat$nt)) {
+                next
+            }
+
+            node_nt <- dat$nt
+            values  <- as.numeric(dat[[var]])
+
+            # Match this node's observations to the reach time axis
+            time_idx <- match(node_nt, reach_nt)
+
+            good <- !is.na(time_idx) &
+                    !is.na(values) &
+                    !is.nan(values)
+
+            mat[j, time_idx[good]] <- values[good]
+        }
+
+        # NetCDF variable name
+        nc_var <- if (var == "Q.constrained") {
+            "Q_constrained"
+        } else {
+            var
+        }
+
+        RNetCDF::var.def.nc(
+            node_group,
+            nc_var,
+            "NC_DOUBLE",
+            c("node", "nt")
+        )
+
+        RNetCDF::att.put.nc(
+            node_group,
+            nc_var,
+            "_FillValue",
+            "NC_DOUBLE",
+            fill
+        )
+
+        RNetCDF::var.put.nc(
+            node_group,
+            nc_var,
+            mat
+        )
+    }
+
+    invisible(NULL)
 }
 
 #' Convert data.frame parameter to a named list
